@@ -1,3 +1,4 @@
+import { Circle, TriangleAlert, Users, Zap, type LucideIcon } from "lucide-react";
 import type { EmpowerDataset, Reason, Severity } from "@/lib/risk-engine";
 import {
   buildRankedRows,
@@ -35,37 +36,54 @@ export interface RankedListProps {
   className?: string;
 }
 
-/** A small icon (text glyph) per reason signal; paired with text, never color alone. */
-function reasonIcon(signal: Reason["signal"]): string {
+/** A small icon per reason signal; paired with text, never color alone. */
+function reasonIcon(signal: Reason["signal"]): LucideIcon {
   switch (signal) {
     case "dependents":
-      return "👥";
+      return Users;
     case "severity":
-      return "⚠";
+      return TriangleAlert;
     case "outage":
-      return "⚡";
+      return Zap;
     default:
-      return "•";
+      return Circle;
   }
 }
+
+/** Header cell: pinned while the table scrolls, with a drawn bottom rule. */
+const TH =
+  "sticky top-0 z-10 whitespace-nowrap bg-neutral-100 px-3 py-3 font-bold shadow-[inset_0_-2px_0_theme(colors.neutral.300)]";
+
+/** Chip tone per signal: the text carries the meaning, color only reinforces. */
+const CHIP_TONE: Record<string, string> = {
+  dependents: "border-neutral-300 bg-white text-storm-navy",
+  severity: "border-alert-red/40 bg-alert-tint text-alert-red",
+  outage: "border-power-edge bg-power-tint text-power-ink",
+};
 
 /** Reason chips: icon + text, only for factors that apply. */
 export function ReasonChips({ reasons }: { reasons: Reason[] }) {
   const active = reasons.filter(reasonApplies);
   if (active.length === 0) {
-    return <span className="text-sm text-slate-600">—</span>;
+    return <span className="text-sm text-neutral-600">—</span>;
   }
   return (
     <ul className="flex flex-wrap gap-1.5">
-      {active.map((reason) => (
-        <li
-          key={reason.signal}
-          className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-mist px-2.5 py-1 text-sm text-storm-navy"
-        >
-          <span aria-hidden="true">{reasonIcon(reason.signal)}</span>
-          <span>{reason.label}</span>
-        </li>
-      ))}
+      {active.map((reason) => {
+        const Icon = reasonIcon(reason.signal);
+        return (
+          <li
+            key={reason.signal}
+            className={[
+              "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-semibold",
+              CHIP_TONE[reason.signal] ?? CHIP_TONE.dependents,
+            ].join(" ")}
+          >
+            <Icon aria-hidden="true" focusable="false" className="h-4 w-4 flex-none" />
+            <span>{reason.label}</span>
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -107,8 +125,18 @@ export function RankedList({
     : "Outreach priority by ZIP, ranked highest first.";
 
   return (
+    // The table scrolls inside this box so its header can stay pinned. The
+    // box is focusable so keyboard users can scroll it too.
     <div
-      className={["w-full overflow-x-auto", className ?? ""].join(" ").trim()}
+      role="region"
+      aria-label="Outreach priority table"
+      tabIndex={0}
+      className={[
+        "max-h-[75vh] w-full overflow-auto rounded-lg border border-neutral-200",
+        className ?? "",
+      ]
+        .join(" ")
+        .trim()}
     >
       {rows.length === 0 ? (
         <p className="text-base text-storm-navy">
@@ -116,28 +144,28 @@ export function RankedList({
         </p>
       ) : (
         <table className="w-full border-collapse text-left text-base text-storm-navy">
-          <caption className="mb-2 text-left text-sm text-slate-600">
+          <caption className="bg-white px-3 py-2 text-left text-sm text-neutral-600">
             {captionText}
             {onSelectZip ? " Select a ZIP to show it on the map." : ""}
           </caption>
           <thead>
-            <tr className="border-b-2 border-slate-300">
-              <th scope="col" className="px-3 py-2 font-bold">
+            <tr>
+              <th scope="col" className={TH}>
                 Rank
               </th>
-              <th scope="col" className="px-3 py-2 font-bold">
+              <th scope="col" className={TH}>
                 ZIP
               </th>
-              <th scope="col" className="px-3 py-2 font-bold">
+              <th scope="col" className={TH}>
                 County
               </th>
-              <th scope="col" className="px-3 py-2 font-bold">
+              <th scope="col" className={TH}>
                 Power-dependent (Medicare)
               </th>
-              <th scope="col" className="px-3 py-2 font-bold">
+              <th scope="col" className={TH}>
                 Score
               </th>
-              <th scope="col" className="px-3 py-2 font-bold">
+              <th scope="col" className={TH}>
                 Reasons
               </th>
             </tr>
@@ -154,13 +182,16 @@ export function RankedList({
                   data-zip={result.zip}
                   aria-current={isSelected ? "true" : undefined}
                   className={[
-                    "border-b border-slate-200 align-top",
+                    "border-b border-neutral-200 align-top",
                     isSelected
-                      ? "bg-power-amber/15 outline outline-2 -outline-offset-2 outline-storm-navy"
-                      : "",
+                      ? "bg-power-tint outline outline-[3px] -outline-offset-[3px] outline-storm-navy"
+                      : "odd:bg-white even:bg-neutral-50 hover:bg-mist",
                   ].join(" ")}
                 >
-                  <td className="px-3 py-3 tabular-nums text-slate-600">
+                  <td className="px-3 py-3 tabular-nums text-neutral-600">
+                    {isSelected ? (
+                      <span className="sr-only">Selected. </span>
+                    ) : null}
                     {index + 1}
                   </td>
                   <th scope="row" className="px-3 py-3 font-bold">
@@ -168,7 +199,7 @@ export function RankedList({
                       <button
                         type="button"
                         onClick={() => onSelectZip(result.zip)}
-                        className="min-h-[44px] min-w-[44px] rounded px-1 text-left font-bold text-storm-navy underline decoration-dotted underline-offset-4 hover:decoration-solid"
+                        className="min-h-[44px] min-w-[44px] rounded-sm px-1 text-left font-bold text-storm-navy underline decoration-dotted decoration-2 underline-offset-4 hover:decoration-solid"
                       >
                         {result.zip}
                       </button>

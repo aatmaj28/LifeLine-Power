@@ -38,9 +38,9 @@ function Bar({ label, share, accent }: { label: string; share: number; accent?: 
         <span className={accent ? "font-bold" : undefined}>{label}</span>
         <span className="font-bold tabular-nums">{pct}%</span>
       </div>
-      <div aria-hidden="true" className="h-4 w-full overflow-hidden rounded-full border border-slate-300 bg-mist">
+      <div aria-hidden="true" className="h-4 w-full overflow-hidden rounded-full border border-neutral-300 bg-white">
         <div
-          className={["h-full rounded-full", accent ? "bg-power-amber" : "bg-slate-500"].join(" ")}
+          className={["h-full rounded-full", accent ? "bg-power-amber" : "bg-neutral-500"].join(" ")}
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -65,7 +65,7 @@ export function OutreachComparison({ frame, zips, priorityOrder }: OutreachCompa
   return (
     <section
       aria-labelledby={`${groupId}-heading`}
-      className="flex flex-col gap-3 rounded-lg border border-slate-300 bg-white p-4"
+      className="flex flex-col gap-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4 sm:p-5"
     >
       <div className="flex flex-wrap items-center gap-3">
         <h4 id={`${groupId}-heading`} className="text-lg font-bold text-storm-navy">
@@ -81,10 +81,10 @@ export function OutreachComparison({ frame, zips, priorityOrder }: OutreachCompa
             key={option}
             className={[
               // The radio is visually hidden, so show its keyboard focus on the label.
-              "inline-flex min-h-[44px] min-w-[44px] cursor-pointer items-center gap-2 rounded-md border px-4 py-2 text-base has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-power-amber",
+              "inline-flex min-h-[48px] min-w-[48px] cursor-pointer items-center gap-2 rounded-full border-2 px-5 py-2 text-base font-semibold transition-colors motion-reduce:transition-none has-[:focus-visible]:outline has-[:focus-visible]:outline-[3px] has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-power-amber",
               n === option
-                ? "border-storm-navy bg-storm-navy font-bold text-white"
-                : "border-slate-400 bg-white text-storm-navy",
+                ? "border-storm-navy bg-storm-navy text-white shadow-card"
+                : "border-neutral-300 bg-white text-storm-navy hover:border-storm-navy",
             ].join(" ")}
           >
             <input
@@ -100,7 +100,7 @@ export function OutreachComparison({ frame, zips, priorityOrder }: OutreachCompa
         ))}
       </fieldset>
 
-      <p aria-live="polite" className="text-lg text-storm-navy">
+      <p aria-live="polite" className="text-lg font-semibold leading-snug text-storm-navy">
         {outreachSentence(result)}
       </p>
 
@@ -112,7 +112,7 @@ export function OutreachComparison({ frame, zips, priorityOrder }: OutreachCompa
         </ul>
       ) : null}
 
-      <p className="text-sm text-slate-700">
+      <p className="text-sm text-neutral-700">
         Share of power dependent Medicare residents in simulated outage areas who
         live in the ZIPs called. Uses the same order as the ranked list below,
         including any live weather alerts. Masked ZIPs count as up to 11.

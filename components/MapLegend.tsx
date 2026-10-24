@@ -8,6 +8,10 @@
 // text, so color is never the only signal.
 
 import { PRIORITY_BUCKETS, type PriorityBucket } from "@/lib/app/planner/rank";
+import { Zap } from "lucide-react";
+import { mapColors } from "@/components/ui/tokens";
+import { cardClasses } from "@/components/ui/Card";
+import { checkboxClasses } from "@/components/ui/Field";
 
 export interface MapLayers {
   dependents: boolean;
@@ -21,16 +25,11 @@ export const DEFAULT_LAYERS: MapLayers = {
   outages: true,
 };
 
-/** Circle fill per priority bucket (shared with the map). */
-export const BUCKET_FILL: Record<PriorityBucket, string> = {
-  lower: "#D3DAE4",
-  medium: "#8C9CB3",
-  higher: "#4A5D7C",
-  highest: "#E8A317",
-};
+/** Circle fill per priority bucket (shared with the map). From the theme. */
+export const BUCKET_FILL: Record<PriorityBucket, string> = mapColors.bucket;
 
-/** County fill ramp (light to dark slate) for power-dependent totals. */
-export const COUNTY_FILL = ["#F1F5F9", "#E2E8F0", "#CBD5E1", "#94A3B8", "#64748B"] as const;
+/** County fill ramp (light to dark) for power-dependent totals. From the theme. */
+export const COUNTY_FILL = mapColors.county;
 
 export interface MapLegendProps {
   layers: MapLayers;
@@ -53,14 +52,14 @@ function Toggle({
   return (
     <label
       htmlFor={id}
-      className="inline-flex min-h-[44px] items-center gap-3 text-base text-storm-navy"
+      className="flex min-h-[48px] cursor-pointer items-center gap-3 rounded-md px-2 text-base text-storm-navy hover:bg-mist"
     >
       <input
         id={id}
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="h-6 w-6 rounded border-slate-400"
+        className={checkboxClasses}
       />
       {children}
     </label>
@@ -69,9 +68,9 @@ function Toggle({
 
 export function MapLegend({ layers, onChange, outagesSimulated }: MapLegendProps) {
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-slate-300 bg-white p-4 lg:flex-row lg:items-start lg:gap-10">
+    <div className={cardClasses({ padding: "sm", className: "flex flex-col gap-5" })}>
       <fieldset className="flex flex-col gap-1">
-        <legend className="mb-1 text-base font-bold text-storm-navy">Map layers</legend>
+        <legend className="mb-2 text-lg font-bold text-storm-navy">Map layers</legend>
         <Toggle
           id="layer-dependents"
           checked={layers.dependents}
@@ -95,9 +94,9 @@ export function MapLegend({ layers, onChange, outagesSimulated }: MapLegendProps
         </Toggle>
       </fieldset>
 
-      <div className="flex flex-col gap-2" aria-label="Map legend">
-        <p className="text-base font-bold text-storm-navy">Legend</p>
-        <p className="text-sm text-slate-700">
+      <div className="flex flex-col gap-2 border-t border-neutral-200 pt-4" aria-label="Map legend">
+        <p className="text-lg font-bold text-storm-navy">Legend</p>
+        <p className="text-sm text-neutral-700">
           Circles are ZIP codes. Bigger circles mean more power dependent
           Medicare residents.
         </p>
@@ -115,8 +114,8 @@ export function MapLegend({ layers, onChange, outagesSimulated }: MapLegendProps
         </ul>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <p className="text-base font-bold text-storm-navy">County borders</p>
+      <div className="flex flex-col gap-2 border-t border-neutral-200 pt-4">
+        <p className="text-lg font-bold text-storm-navy">County borders</p>
         <ul className="flex flex-col gap-1 text-sm text-storm-navy">
           <li className="flex items-center gap-2">
             <span aria-hidden="true" className="inline-block h-4 w-6 border-2 border-dashed border-alert-red" />
@@ -128,14 +127,14 @@ export function MapLegend({ layers, onChange, outagesSimulated }: MapLegendProps
           </li>
           <li className="flex items-center gap-2">
             <span aria-hidden="true" className="inline-block h-4 w-6 border-4 border-storm-navy bg-power-amber/40" />
-            <span aria-hidden="true">⚡</span> Outage area{outagesSimulated ? " (Simulated)" : ""}
+            <Zap aria-hidden="true" focusable="false" className="h-4 w-4 flex-none" /> Outage area{outagesSimulated ? " (Simulated)" : ""}
           </li>
           <li className="flex items-center gap-2">
             <span aria-hidden="true" className="inline-block h-4 w-6 border-2 border-dashed border-calm-green" />
             Power restoring{outagesSimulated ? " (Simulated)" : ""}
           </li>
         </ul>
-        <p className="text-sm text-slate-700">
+        <p className="text-sm text-neutral-700">
           Darker county shading means more power dependent residents.
         </p>
       </div>

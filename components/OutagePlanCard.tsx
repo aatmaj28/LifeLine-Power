@@ -27,6 +27,7 @@ import type { SmallCount, Timeline } from "@/lib/risk-engine";
 import type { ResidentPlan } from "@/lib/app/plan-storage";
 import type { ResolvedCopy } from "@/lib/app/copy/resolve";
 import { formatBatteryTimeline } from "@/lib/app/battery-format";
+import { Plug } from "lucide-react";
 import { SafetyLines } from "./SafetyLines";
 
 /** Props for {@link OutagePlanCard}. */
@@ -170,7 +171,7 @@ export function OutagePlanCard({
   className,
 }: OutagePlanCardProps) {
   const containerClasses = [
-    "flex flex-col gap-7 rounded-xl border border-slate-200 bg-white p-6 text-storm-navy shadow-sm sm:p-8",
+    "flex flex-col gap-7 rounded-xl border border-neutral-200 border-t-4 border-t-storm-navy bg-white p-6 text-storm-navy shadow-raised sm:p-8",
     className,
   ]
     .filter(Boolean)
@@ -207,9 +208,7 @@ export function OutagePlanCard({
           <ul className="flex flex-col gap-1">
             {plan.deviceTypes.map((device, index) => (
               <li key={`${device}-${index}`} className="flex items-start gap-2">
-                <span aria-hidden="true" className="mt-1 text-power-amber">
-                  ◆
-                </span>
+                <Plug aria-hidden="true" focusable="false" className="mt-1 h-5 w-5 flex-none text-storm-navy" />
                 <span>{device}</span>
               </li>
             ))}
@@ -279,9 +278,9 @@ export function OutagePlanCard({
           ))}
         </ul>
         {smallCount ? (
-          <p className="text-sm text-slate-700">{smallCount.label}</p>
+          <p className="text-sm text-neutral-700">{smallCount.label}</p>
         ) : null}
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-neutral-600">
           Help resource details are verified and cited in docs/data-notes.md.
         </p>
       </section>

@@ -418,3 +418,36 @@ Two real issues:
   preview deploys stay team-only. After that, `/`, `/plan`, `/planner`, and
   `/api/empower` all returned 200. Lesson: a deploy that "succeeded" still has
   to be opened as an anonymous visitor.
+
+## UI redesign pass
+
+A presentation-only pass to make PowerPlan look like a finished product. No
+changes to `lib/`, data fetching, print CSS, map logic, or read-aloud logic.
+
+- **Focus ring fixed first.** 16 `focus:outline-none` / `focus-visible:outline-none`
+  classes were silently beating the global amber ring (a Tailwind class plus a
+  pseudo-class outranks a bare `:focus-visible`). They are gone, and there is
+  now one ring: 3px amber with a thin navy inner ring, because amber alone is
+  under 3:1 on white.
+- **Tokens defined once** in `components/ui/tokens.ts`. Tailwind builds its
+  theme from them, `globals.css` reads them with `theme()`, and the map legend
+  uses them too. Mixed slate/gray became one `neutral` scale.
+- **Shared primitives** in `components/ui/` (Button, Card, Field,
+  SectionHeading, Badge). There is also an app shell with a header (wordmark, nav
+  with `aria-current`) and a footer (safety lines, Mass 211, data sources).
+  Each page's `<main>` is now the skip-link target, with no wrapper div.
+- **Pages:** a two-column landing hero with an inline SVG. `/plan` has 4
+  numbered steps and a sticky plan card. `/planner` has 3 stat cards, a
+  sidebar of controls next to the map, and a ranked table with a pinned header.
+  Emoji icons were replaced with lucide-react icons (`aria-hidden`, always next
+  to text).
+- **Working with the test suite.** The investigation report listed every
+  selector the tests depend on. The design worked around them instead of
+  editing tests: chip icons use `flex-none` so the score span stays the only
+  `shrink-0` in a row; stat cards never say "Simulated" so that badge text stays
+  unique; no duplicated mobile/desktop markup; one `role="alert"` and one
+  `role="status"`. No test was changed. 176/176 pass.
+- **Hook behavior.** The report-only axe hook fired on every save. Saves were
+  batched and the axe suite ran once per batch. It never needed a fix, and it
+  never looped. A temporary axe test also checked the new shell (one banner,
+  one main, one contentinfo) and was then deleted.

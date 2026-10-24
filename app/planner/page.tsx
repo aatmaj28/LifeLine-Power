@@ -31,7 +31,77 @@
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 
+import {
+  CloudLightning,
+  FlaskConical,
+  ListOrdered,
+  Map as MapIcon,
+  TriangleAlert,
+  Users,
+  X,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
+
 import DataSourceBadge from "@/components/DataSourceBadge";
+import { Button } from "@/components/ui/Button";
+import { cardClasses } from "@/components/ui/Card";
+import { checkboxClasses, hintClasses } from "@/components/ui/Field";
+import { SectionHeading, h1Classes, h2Classes } from "@/components/ui/SectionHeading";
+
+/** A toggle row in the sidebar: large, bordered, whole row clickable. */
+const toggleRowClasses =
+  "flex min-h-[48px] cursor-pointer items-start gap-3 rounded-lg border-2 border-neutral-200 bg-white px-3 py-3 text-base leading-snug text-storm-navy hover:border-storm-navy has-[:checked]:border-storm-navy has-[:checked]:bg-mist";
+
+/** One summary stat: label, big value, short note. Rendered inside a <dl>. */
+function StatCard({
+  icon: Icon,
+  label,
+  value,
+  note,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  note: string;
+}) {
+  return (
+    <div className={cardClasses({ className: "flex flex-col gap-2" })}>
+      <dt className="flex items-center gap-2 text-base font-semibold text-neutral-700">
+        <span className="inline-flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-mist text-storm-navy">
+          <Icon aria-hidden="true" focusable="false" className="h-5 w-5" />
+        </span>
+        {label}
+      </dt>
+      <dd className="text-3xl font-bold tabular-nums text-storm-navy sm:text-4xl">{value}</dd>
+      <dd className="text-sm leading-relaxed text-neutral-600">{note}</dd>
+    </div>
+  );
+}
+
+/** Count distinct counties with an active outage (records may name a ZIP, a county name, or a FIPS). */
+function countOutageCounties(
+  outages: ReadonlyArray<{ zip?: string; county?: string; active: boolean }>,
+  zips: ReadonlyArray<{ zip: string; county: string; countyFips: string }>,
+): number {
+  const fipsByZip = new Map(zips.map((z) => [z.zip, z.countyFips]));
+  const fipsByName = new Map(
+    zips.map((z) => [z.county.toLowerCase().replace(/\s+county$/, ""), z.countyFips]),
+  );
+  const counties = new Set<string>();
+  for (const o of outages) {
+    if (!o.active) continue;
+    let key = o.zip ? fipsByZip.get(o.zip) : undefined;
+    if (!key && o.county) {
+      const c = o.county.trim();
+      key = /^\d{5}$/.test(c)
+        ? c
+        : (fipsByName.get(c.toLowerCase().replace(/\s+county$/, "")) ?? c.toLowerCase());
+    }
+    if (key) counties.add(key);
+  }
+  return counties.size;
+}
 import MapLegend, { DEFAULT_LAYERS, type MapLayers } from "@/components/MapLegend";
 import RankedList from "@/components/RankedList";
 import SimulatedBadge from "@/components/SimulatedBadge";
@@ -315,6 +385,46 @@ export default function PlannerPage() {
     [rankedRows],
   );
 
+  // Summary stat cards: plain counts from the loaded data and the current mode.
+  // Display only; nothing here feeds scoring.
+  const stats = useMemo(() => {
+    const residents = dataset
+      ? dataset.zip
+          .reduce((sum, z) => sum + z.powerDependentDme.value, 0)
+          .toLocaleString("en-US")
+      : empower.status === "error"
+        ? "Not available"
+        : "Loading";
+
+    const alertZips = severityByZip
+      ? [...severityByZip.values()].filter((s) => s !== "none").length.toLocaleString("en-US")
+      : alerts.status === "error"
+        ? "Not available"
+        : "Loading";
+
+    let outageCounties: string;
+    let outageNote: string;
+    if (replayOn && replayCountyStatus) {
+      outageCounties = String(
+        [...replayCountyStatus.values()].filter((s) => s === "outage").length,
+      );
+      outageNote = `From the storm replay practice data, hour ${clampHour(replayHour, REPLAY?.frames.length ?? 1)}.`;
+    } else if (stormScenario) {
+      outageCounties =
+        outages.status === "ok" && outages.value && dataset
+          ? String(countOutageCounties(outages.value, dataset.zip))
+          : outages.status === "error"
+            ? "Not available"
+            : "Loading";
+      outageNote = "From the storm scenario practice data.";
+    } else {
+      outageCounties = "Not tracked";
+      outageNote =
+        "Live mode has no outage feed. Turn on the storm scenario or replay to practice.";
+    }
+    return { residents, alertZips, outageCounties, outageNote };
+  }, [dataset, empower.status, severityByZip, alerts.status, replayOn, replayCountyStatus, replayHour, stormScenario, outages]);
+
   // Clicking a ZIP on the map filters the list to that ZIP's county (so its row
   // is always present) and highlights the row.
   const selectZipFromMap = (zip: string) => {
@@ -331,22 +441,16 @@ export default function PlannerPage() {
   }, [selectedZip, selectedCountyFips]);
 
   return (
-    <main className="flex min-h-screen flex-col">
-      {/* Navy page header, consistent with the landing page. */}
-      <header className="bg-storm-navy">
-        <div className="mx-auto w-full max-w-7xl px-4 py-5">
-          <h1 className="text-3xl font-bold text-white">Planner dashboard</h1>
-        </div>
-      </header>
-
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8">
-        <div className="flex flex-col gap-2">
-          <p className="max-w-3xl text-base leading-relaxed text-storm-navy">
+    <main id="main-content" className="flex flex-1 flex-col">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10">
+        <div className="flex flex-col gap-3">
+          <h1 className={h1Classes}>Planner dashboard</h1>
+          <p className="max-w-3xl text-xl leading-relaxed text-neutral-700">
             See where power-dependent Medicare residents live across
             Massachusetts, overlaid with active weather alerts, so you can focus
             outreach where it matters most.
           </p>
-          <p className="max-w-3xl text-sm leading-relaxed text-slate-600">
+          <p className="max-w-3xl text-base leading-relaxed text-neutral-600">
             Counts come from HHS emPOWER. They are aggregated, de-identified
             Medicare data, not a list of individuals. A count of &ldquo;11 or
             fewer&rdquo; means the source hid the exact number to protect
@@ -354,70 +458,41 @@ export default function PlannerPage() {
           </p>
         </div>
 
-        {/* Storm Scenario toggle. Off = live data only. On = add the simulated
-            outage layer, badged as simulated. */}
-        <section
-          aria-labelledby="scenario-heading"
-          className="flex flex-col gap-3 rounded-lg border border-slate-300 bg-white p-4"
-        >
-          <h2
-            id="scenario-heading"
-            className="text-lg font-semibold text-storm-navy"
-          >
-            Storm Scenario
+        {/* Summary stats. Plain facts from the loaded data and current mode. */}
+        <section aria-labelledby="summary-heading">
+          <h2 id="summary-heading" className="sr-only">
+            Summary
           </h2>
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="inline-flex min-h-[44px] items-center gap-3 text-base text-storm-navy">
-              <input
-                type="checkbox"
-                checked={stormScenario}
-                onChange={(e) => toggleScenario(e.target.checked)}
-                className="h-6 w-6 rounded border-slate-400 text-power-amber focus-visible:outline-none"
-              />
-              <span>
-                Simulate a nor&rsquo;easter with outages over Eastern
-                Massachusetts
-              </span>
-            </label>
-            {stormScenario && <SimulatedBadge label="Simulated outages" />}
-          </div>
-          {REPLAY ? (
-            <label className="inline-flex min-h-[44px] items-center gap-3 text-base text-storm-navy">
-              <input
-                type="checkbox"
-                checked={replayOn}
-                onChange={(e) => toggleReplay(e.target.checked)}
-                className="h-6 w-6 rounded border-slate-400 text-power-amber focus-visible:outline-none"
-              />
-              <span>
-                Show Storm Replay: a simulated 12 hour nor&rsquo;easter, hour by
-                hour (Simulated)
-              </span>
-            </label>
-          ) : (
-            <p className="text-base text-storm-navy">
-              The simulated Storm Replay could not load.
-            </p>
-          )}
-          {stormScenario && outages.status === "ok" && outages.updatedAt && (
-            <DataSourceBadge
-              source="simulated"
-              updatedAt={outages.updatedAt}
-              className="self-start"
+          <dl className="grid gap-4 sm:grid-cols-3">
+            <StatCard
+              icon={Users}
+              label="Power dependent residents in MA"
+              value={stats.residents}
+              note="Medicare residents using electricity dependent equipment. ZIPs shown as 11 or fewer count as up to 11."
             />
-          )}
-          {stormScenario && outages.status === "error" && (
-            <p role="alert" className="text-base text-alert-red">
-              The simulated outage layer could not load: {outages.errorMessage}
-            </p>
-          )}
+            <StatCard
+              icon={TriangleAlert}
+              label="ZIPs with active alerts"
+              value={stats.alertZips}
+              note="ZIP codes in counties with an active National Weather Service alert."
+            />
+            <StatCard
+              icon={Zap}
+              label="Counties in outage"
+              value={stats.outageCounties}
+              note={stats.outageNote}
+            />
+          </dl>
         </section>
 
         {/* Full-width simulated banner, shown only while the scenario is on. */}
         {stormScenario && (
-          <div className="w-full rounded-lg border border-power-amber bg-power-amber/15 px-4 py-3 text-base font-medium text-storm-navy">
-            Simulated storm scenario is on. The outage layer below is simulated
-            data, not a live outage feed.
+          <div className="flex w-full items-start gap-3 rounded-lg border border-power-edge bg-power-tint px-4 py-3 text-base font-semibold text-power-ink">
+            <FlaskConical aria-hidden="true" focusable="false" className="mt-0.5 h-5 w-5 flex-none" />
+            <span>
+              Simulated storm scenario is on. The outage layer below is simulated
+              data, not a live outage feed.
+            </span>
           </div>
         )}
 
@@ -442,7 +517,7 @@ export default function PlannerPage() {
 
         {/* Alerts errors are surfaced honestly but do not block the map/list. */}
         {alerts.status === "error" && (
-          <p role="alert" className="text-base text-alert-red">
+          <p role="alert" className="text-base font-semibold text-alert-red">
             Live weather alerts could not load: {alerts.errorMessage}. The map
             and list below still show the resident data.
           </p>
@@ -456,41 +531,99 @@ export default function PlannerPage() {
         )}
 
         {empower.status === "error" && (
-          <p role="alert" className="text-base text-alert-red">
+          <p role="alert" className="text-base font-semibold text-alert-red">
             The resident data could not load: {empower.errorMessage}. No data is
             shown rather than guessing.
           </p>
         )}
 
+        {/* Sidebar (controls, layers, legend) + map. Stacked on mobile with
+            the controls first; side by side on large screens. */}
+        <div className="grid items-start gap-6 lg:grid-cols-[20rem_minmax(0,1fr)] xl:grid-cols-[22rem_minmax(0,1fr)]">
+        <div className="flex min-w-0 flex-col gap-6">
+        {/* Storm Scenario toggle. Off = live data only. On = add the simulated
+            outage layer, badged as simulated. */}
+        <section
+          aria-labelledby="scenario-heading"
+          className={cardClasses({ padding: "sm", className: "flex flex-col gap-3" })}
+        >
+          <h2
+            id="scenario-heading"
+            className={`flex items-center gap-2 ${h2Classes}`}
+          >
+            <CloudLightning aria-hidden="true" focusable="false" className="h-6 w-6 shrink-0" />
+            Storm Scenario
+          </h2>
+          <p className={hintClasses}>
+            Live data is shown by default. Turn on one practice mode at a time.
+          </p>
+          <div className="flex flex-col gap-2">
+            <label className={toggleRowClasses}>
+              <input
+                type="checkbox"
+                checked={stormScenario}
+                onChange={(e) => toggleScenario(e.target.checked)}
+                className={`mt-0.5 ${checkboxClasses}`}
+              />
+              <span>
+                Simulate a nor&rsquo;easter with outages over Eastern
+                Massachusetts
+              </span>
+            </label>
+            {stormScenario && <SimulatedBadge label="Simulated outages" className="self-start" />}
+          </div>
+          {REPLAY ? (
+            <label className={toggleRowClasses}>
+              <input
+                type="checkbox"
+                checked={replayOn}
+                onChange={(e) => toggleReplay(e.target.checked)}
+                className={`mt-0.5 ${checkboxClasses}`}
+              />
+              <span>
+                Show Storm Replay: a simulated 12 hour nor&rsquo;easter, hour by
+                hour (Simulated)
+              </span>
+            </label>
+          ) : (
+            <p className="text-base text-storm-navy">
+              The simulated Storm Replay could not load.
+            </p>
+          )}
+          {stormScenario && outages.status === "ok" && outages.updatedAt && (
+            <DataSourceBadge
+              source="simulated"
+              updatedAt={outages.updatedAt}
+              className="self-start"
+            />
+          )}
+          {stormScenario && outages.status === "error" && (
+            <p role="alert" className="text-base font-semibold text-alert-red">
+              The simulated outage layer could not load: {outages.errorMessage}
+            </p>
+          )}
+        </section>
+
         {empower.status === "ok" && dataset && (
-          <div className="flex flex-col gap-8">
-            {/* The map is the hero: full width, at least 60vh tall. The ranked
-                list below is the full non-map path to the same data. */}
+          <MapLegend
+            layers={layers}
+            onChange={setLayers}
+            outagesSimulated={outagesSimulated}
+          />
+        )}
+        </div>
+
+        {empower.status === "ok" && dataset && (
+            /* The map is the hero of the main column, at least 60vh tall. The
+               ranked list below is the full non-map path to the same data. */
             <section
               aria-labelledby="map-heading"
-              className="flex flex-col gap-3"
+              className="flex min-w-0 flex-col gap-4"
             >
-              <h2
-                id="map-heading"
-                className="text-xl font-semibold text-storm-navy"
-              >
+              <SectionHeading id="map-heading" icon={MapIcon}>
                 Massachusetts map
-              </h2>
-              {replayOn && REPLAY && (
-                <StormReplay
-                  file={REPLAY}
-                  zips={dataset.zip}
-                  hour={replayHour}
-                  onHourChange={setReplayHour}
-                  priorityOrder={priorityOrder}
-                />
-              )}
-              <MapLegend
-                layers={layers}
-                onChange={setLayers}
-                outagesSimulated={outagesSimulated}
-              />
-              <div className="h-[60vh] min-h-[28rem] w-full overflow-hidden rounded-lg border border-slate-300 bg-white">
+              </SectionHeading>
+              <div className="h-[60vh] min-h-[28rem] w-full overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-card">
                 <CountyChoropleth
                   dataset={dataset as unknown as EmpowerDataset}
                   countySeverity={activeCountySeverity}
@@ -509,37 +642,50 @@ export default function PlannerPage() {
                   layers={layers}
                 />
               </div>
-              <p className="text-sm text-slate-600">
+              <p className={hintClasses}>
                 Click a county to filter the list, or a circle to see a ZIP. Two
                 small ZIPs (02350 and 02661) have no Census location and appear
                 only in the list.
               </p>
+              {replayOn && REPLAY && (
+                <StormReplay
+                  file={REPLAY}
+                  zips={dataset.zip}
+                  hour={replayHour}
+                  onHourChange={setReplayHour}
+                  priorityOrder={priorityOrder}
+                />
+              )}
             </section>
+        )}
+        </div>
 
-            {/* Ranked list: the accessible non-map path to the same data. */}
+        {empower.status === "ok" && dataset && (
+            /* Ranked list: the accessible non-map path to the same data. */
             <section
               aria-labelledby="ranked-heading"
-              className="flex flex-col gap-3"
+              className={cardClasses({ className: "flex flex-col gap-4" })}
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2
                   id="ranked-heading"
-                  className="text-xl font-semibold text-storm-navy"
+                  className={`flex items-center gap-2 ${h2Classes}`}
                 >
+                  <ListOrdered aria-hidden="true" focusable="false" className="h-6 w-6 shrink-0" />
                   Outreach priority
                   {selectedCountyFips ? ` (county ${selectedCountyFips})` : ""}
                 </h2>
                 {selectedCountyFips && (
-                  <button
-                    type="button"
+                  <Button
+                    variant="secondary"
                     onClick={() => {
                       setSelectedCountyFips(undefined);
                       setSelectedZip(undefined);
                     }}
-                    className="inline-flex min-h-[44px] w-fit items-center rounded border border-slate-400 bg-white px-4 py-2 text-base text-storm-navy hover:bg-mist focus-visible:outline-none"
                   >
+                    <X aria-hidden="true" focusable="false" className="h-5 w-5 shrink-0" />
                     Show all counties
-                  </button>
+                  </Button>
                 )}
               </div>
               <RankedList
@@ -552,7 +698,6 @@ export default function PlannerPage() {
                 onSelectZip={setSelectedZip}
               />
             </section>
-          </div>
         )}
       </div>
     </main>

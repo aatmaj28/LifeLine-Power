@@ -11,14 +11,12 @@
 :root {
   color-scheme: light; /* never follow the OS into dark mode */
 
-  /* Palette */
-  --storm-navy: #1b2a41; /* primary text, header */
-  --mist: #eef2f6; /* page background */
-  --surface: #ffffff; /* cards / surfaces */
-  --power-amber: #e8a317; /* single accent: battery + primary actions */
-  --power-amber-ink: #5a3d00; /* readable text on amber (>= 4.5:1) */
-  --alert-red: #b42318; /* severe alerts only */
-  --calm-green: #2f7d4f; /* safe states */
+  /* Palette: aliases of the Tailwind theme (components/ui/tokens.ts is the
+   * single source). Kept as variables only for the few raw CSS rules here. */
+  --storm-navy: theme("colors.storm.navy");
+  --mist: theme("colors.mist");
+  --surface: theme("colors.surface");
+  --power-amber: theme("colors.power.amber");
 
   --background: var(--mist);
   --foreground: var(--storm-navy);
@@ -70,10 +68,15 @@ body {
 /* Req 10.4 — Visible, high-contrast focus indicator on every interactive
  * control, even if a component removes its own outline. Never remove focus
  * outlines without an equal-or-better replacement. */
+/* One focus style everywhere: a 3px amber ring offset from the control, with
+ * a thin navy ring underneath. Amber alone is under 3:1 on white, so the navy
+ * inner ring keeps the indicator visible on light surfaces; on the navy header
+ * the amber ring carries it. Do not add outline-none / ring utilities in
+ * components; this rule is the single source of focus styling. */
 :focus-visible {
   outline: 3px solid var(--power-amber);
   outline-offset: 2px;
-  border-radius: 2px;
+  box-shadow: 0 0 0 2px var(--storm-navy);
 }
 
 /* Minimum tap-target helper (>= 44x44px). Tap targets are mostly handled in

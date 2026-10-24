@@ -134,3 +134,21 @@ verified by the axe tests in `npm test` and at checkpoints instead.
   read `data/` via `process.cwd()` at runtime, which file tracing cannot see.
 - **Visitor access:** Netlify team login applies to non-production deploys only.
   Production is public; previews stay team-only.
+
+## UI redesign
+
+- **One focus style.** 3px amber outline plus a 2px navy inner ring
+  (`globals.css`). Components must not add `outline-none` or ring utilities.
+- **Tokens in `components/ui/tokens.ts`** are the single source for colors,
+  radius and shadows. Tailwind, `globals.css` (via `theme()`), and the map
+  legend all read from it. `CountyChoropleth` still has its own border-color
+  literals (same values). It was left untouched, as asked.
+- **lucide-react pinned at 1.61.0** for icons. Icons are always `aria-hidden`
+  and next to visible text.
+- **Planner stat cards** show live facts. "Counties in outage" reads "Not
+  tracked" in live mode, because there is no live outage feed. In practice modes
+  it says "storm scenario" or "storm replay" rather than "Simulated", which
+  keeps that badge text unique on the page; the simulated banner and badges
+  stay next to it.
+- **Ranked table** scrolls inside a focusable, labeled region so its header can
+  stay pinned.

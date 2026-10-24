@@ -66,7 +66,7 @@ export function LanguagePicker({
 
   return (
     <div className={containerClasses}>
-      <label htmlFor={id} className="text-sm font-medium text-gray-900">
+      <label htmlFor={id} className="text-base font-semibold text-storm-navy">
         {label}
       </label>
       <select
@@ -75,7 +75,7 @@ export function LanguagePicker({
         onChange={(event) =>
           onChange(event.target.value as SupportedLanguage)
         }
-        className="min-h-[44px] rounded border border-gray-400 bg-white px-3 py-2 text-base text-gray-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600"
+        className="min-h-[48px] rounded-md border border-neutral-400 bg-white px-3 py-2 text-base text-storm-navy shadow-card hover:border-storm-navy"
       >
         {LANGUAGE_OPTIONS.map((option) => (
           <option key={option.value} value={option.value}>

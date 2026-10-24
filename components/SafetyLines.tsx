@@ -10,6 +10,8 @@
  * shown is the two provided safety lines.
  */
 
+import { Phone, Stethoscope } from "lucide-react";
+
 export interface SafetyLinesProps {
   /** Fixed safety line 1, verbatim from the per-language table (e.g. "...call 911."). */
   safetyLine1: string;
@@ -33,7 +35,7 @@ export function SafetyLines({
   className,
 }: SafetyLinesProps) {
   const containerClasses = [
-    "rounded-lg border-2 border-amber-600 bg-amber-50 p-4 text-amber-950",
+    "rounded-lg border-2 border-power-edge bg-power-tint p-4 text-power-ink",
     className,
   ]
     .filter(Boolean)
@@ -42,16 +44,12 @@ export function SafetyLines({
   return (
     <section role="note" className={containerClasses}>
       <ul className="flex list-none flex-col gap-3 text-base font-semibold leading-relaxed">
-        <li className="flex items-start gap-2">
-          <span aria-hidden="true" className="shrink-0 text-lg">
-            ⚠️
-          </span>
+        <li className="flex items-start gap-3">
+          <Phone aria-hidden="true" focusable="false" className="mt-0.5 h-5 w-5 shrink-0" />
           <span>{safetyLine1}</span>
         </li>
-        <li className="flex items-start gap-2">
-          <span aria-hidden="true" className="shrink-0 text-lg">
-            ⚠️
-          </span>
+        <li className="flex items-start gap-3">
+          <Stethoscope aria-hidden="true" focusable="false" className="mt-0.5 h-5 w-5 shrink-0" />
           <span>{safetyLine2}</span>
         </li>
       </ul>

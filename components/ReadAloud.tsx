@@ -12,6 +12,9 @@
 //   short note.
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Square, Volume2 } from "lucide-react";
+
+import { buttonClasses } from "./ui/Button";
 
 import type { ResolvedCopy } from "@/lib/app/copy/resolve";
 import type { ResidentPlan } from "@/lib/app/plan-storage";
@@ -142,20 +145,20 @@ export function ReadAloud({
         <button
           type="button"
           onClick={read}
-          className="inline-flex min-h-[44px] items-center gap-2 rounded-md border-2 border-storm-navy bg-white px-5 py-2 text-base font-semibold text-storm-navy hover:bg-mist"
+          className={buttonClasses({ variant: "secondary" })}
         >
-          <span aria-hidden="true">🔊</span> Read my plan aloud
+          <Volume2 aria-hidden="true" focusable="false" className="h-5 w-5 shrink-0" /> Read my plan aloud
         </button>
         <button
           type="button"
           onClick={stop}
           disabled={!speaking}
-          className="inline-flex min-h-[44px] items-center gap-2 rounded-md border border-slate-400 bg-white px-5 py-2 text-base font-medium text-storm-navy hover:bg-mist disabled:cursor-not-allowed disabled:text-slate-400"
+          className={buttonClasses({ variant: "ghost" })}
         >
-          <span aria-hidden="true">■</span> Stop
+          <Square aria-hidden="true" focusable="false" className="h-4 w-4 shrink-0" /> Stop
         </button>
       </div>
-      <p role="status" className="text-sm text-slate-700">
+      <p role="status" className="text-sm text-neutral-700">
         {note || (speaking ? "Reading your plan aloud." : "")}
       </p>
     </div>

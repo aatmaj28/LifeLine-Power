@@ -1,5 +1,8 @@
 import type { Config } from "tailwindcss";
+import { mapColors, neutral, palette, radius, shadow } from "./components/ui/tokens";
 
+// Every color, radius and shadow comes from components/ui/tokens.ts, so the
+// palette is defined exactly once.
 const config: Config = {
   content: [
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
@@ -23,23 +26,28 @@ const config: Config = {
         ],
       },
       colors: {
-        storm: {
-          navy: "#1B2A41",
-        },
-        mist: "#EEF2F6",
+        storm: { navy: palette.navy },
+        mist: palette.mist,
+        surface: palette.surface,
         power: {
-          amber: "#E8A317",
-          // Dark brown ink that reads on amber at >= 4.5:1, for text/icons
-          // placed on an amber fill.
-          ink: "#5A3D00",
+          amber: palette.amber,
+          // Dark brown ink that reads on amber at >= 4.5:1.
+          ink: palette.amberInk,
+          tint: palette.amberTint,
+          edge: palette.amberEdge,
         },
-        alert: {
-          red: "#B42318",
-        },
-        calm: {
-          green: "#2F7D4F",
+        alert: { red: palette.red, tint: palette.redTint },
+        calm: { green: palette.green, tint: palette.greenTint },
+        neutral,
+        map: {
+          lower: mapColors.bucket.lower,
+          medium: mapColors.bucket.medium,
+          higher: mapColors.bucket.higher,
+          highest: mapColors.bucket.highest,
         },
       },
+      borderRadius: radius,
+      boxShadow: shadow,
     },
   },
   plugins: [],

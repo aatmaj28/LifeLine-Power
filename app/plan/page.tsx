@@ -52,6 +52,78 @@ import OutagePlanCard from "@/components/OutagePlanCard";
 import DataSourceBadge from "@/components/DataSourceBadge";
 import ReadAloud from "@/components/ReadAloud";
 import FridgeCard, { QR_TRUST_NOTE } from "@/components/FridgeCard";
+import { Button } from "@/components/ui/Button";
+import { cardClasses } from "@/components/ui/Card";
+import {
+  Field,
+  checkboxClasses,
+  hintClasses,
+  inputClasses,
+  labelClasses,
+} from "@/components/ui/Field";
+import { SectionHeading, h1Classes, h2Classes } from "@/components/ui/SectionHeading";
+import {
+  CloudLightning,
+  Info,
+  Plus,
+  Printer,
+  QrCode,
+  Share2,
+  Trash2,
+  TriangleAlert,
+  type LucideIcon,
+} from "lucide-react";
+
+/**
+ * One numbered step of the resident form. The visible number is decorative;
+ * the heading carries "Step N of 4" for screen readers.
+ */
+function Step({
+  n,
+  title,
+  hint,
+  children,
+}: {
+  n: number;
+  title: string;
+  hint: string;
+  children: React.ReactNode;
+}) {
+  const headingId = `step-${n}-heading`;
+  return (
+    <section aria-labelledby={headingId} className={cardClasses({ className: "flex flex-col gap-5" })}>
+      <div className="flex items-start gap-4">
+        <span
+          aria-hidden="true"
+          className="inline-flex h-10 w-10 flex-none items-center justify-center rounded-full bg-storm-navy text-lg font-bold text-white"
+        >
+          {n}
+        </span>
+        <div className="flex flex-col gap-1">
+          <h2 id={headingId} className={h2Classes}>
+            <span className="sr-only">Step {n} of 4: </span>
+            {title}
+          </h2>
+          <p className={hintClasses}>{hint}</p>
+        </div>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** Severity styling for an alert card. The "Severity: X" text carries the meaning. */
+function alertTone(severity: string): { icon: LucideIcon; icon_color: string; card: string } {
+  switch (severity) {
+    case "Extreme":
+    case "Severe":
+      return { icon: TriangleAlert, icon_color: "text-alert-red", card: "border-l-alert-red bg-alert-tint" };
+    case "Moderate":
+      return { icon: CloudLightning, icon_color: "text-power-ink", card: "border-l-power-amber bg-power-tint" };
+    default:
+      return { icon: Info, icon_color: "text-storm-navy", card: "border-l-neutral-400 bg-white" };
+  }
+}
 
 /** The fixed list of device types a resident can depend on. */
 const DEVICE_TYPES: readonly string[] = [
@@ -402,7 +474,7 @@ export default function PlanPage() {
   const zipValid = isValidZip(plan.zip);
 
   return (
-    <main className="flex min-h-screen flex-col" data-print={printMode}>
+    <main id="main-content" className="flex flex-1 flex-col" data-print={printMode}>
       {/* Print stylesheet: hide controls and show only the card when printing.
           In fridge mode, print only the one-page fridge card. */}
       <style>{`
@@ -416,58 +488,54 @@ export default function PlanPage() {
         }
       `}</style>
 
-      {/* Navy page header, consistent with the landing page. */}
-      <header className="bg-storm-navy print-hide">
-        <div className="mx-auto w-full max-w-[680px] px-4 py-5">
-          <span className="text-2xl font-bold text-white">PowerPlan</span>
-        </div>
-      </header>
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-10">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="print-default flex max-w-3xl flex-col gap-3">
+            <h1 className={h1Classes}>
+              {resolvedCopy.catalog["page.title"]}
+            </h1>
+            <p className="text-xl leading-relaxed text-neutral-700">
+              {resolvedCopy.catalog["page.intro"]}
+            </p>
+          </div>
 
-      <div className="mx-auto flex w-full max-w-[680px] flex-col gap-8 px-4 py-8">
-        <div className="print-default flex flex-col gap-2">
-          <h1 className="text-3xl font-bold text-storm-navy">
-            {resolvedCopy.catalog["page.title"]}
-          </h1>
-          <p className="text-lg leading-relaxed text-storm-navy">
-            {resolvedCopy.catalog["page.intro"]}
-          </p>
+          {/* Language picker (does not print). */}
+          <div className="print-hide w-full sm:max-w-xs">
+            <LanguagePicker
+              value={plan.language}
+              onChange={handleLanguageChange}
+              label={resolvedCopy.catalog["form.language.label"]}
+            />
+          </div>
         </div>
 
         {restoreNote ? (
           <p
             role="status"
-            className="print-hide rounded-md border border-storm-navy bg-white px-4 py-3 text-base text-storm-navy"
+            className="print-hide flex items-start gap-3 rounded-lg border border-neutral-200 border-l-4 border-l-storm-navy bg-white px-4 py-3 text-base text-storm-navy shadow-card"
           >
-            {restoreNote}
+            <Info aria-hidden="true" focusable="false" className="mt-0.5 h-5 w-5 flex-none" />
+            <span>{restoreNote}</span>
           </p>
         ) : null}
 
-        {/* Language picker (does not print). */}
-        <div className="print-hide">
-          <LanguagePicker
-            value={plan.language}
-            onChange={handleLanguageChange}
-            label={resolvedCopy.catalog["form.language.label"]}
-          />
-        </div>
-
+        {/* Two columns on desktop. DOM order (form, alerts, card, fridge)
+            is the reading, tab and mobile order; grid placement moves the
+            card into a sticky right column on large screens only. */}
+        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] xl:grid-cols-[minmax(0,1fr)_minmax(0,34rem)]">
         {/* The input form. Hidden on print so only the plan card prints. */}
         <form
-          className="print-hide flex flex-col gap-6"
+          className="print-hide flex min-w-0 flex-col gap-5 lg:col-start-1"
           onSubmit={(e) => e.preventDefault()}
         >
-          {/* Step: ZIP */}
-          <section className="flex flex-col gap-3 rounded-lg border border-slate-300 bg-white p-5">
-            <h2 className="text-lg font-semibold text-storm-navy">
-              Your ZIP code
-            </h2>
-            <div className="flex flex-col gap-1">
-              <label
-                htmlFor="zip"
-                className="text-base font-medium text-storm-navy"
-              >
-                {resolvedCopy.catalog["form.zip.label"]}
-              </label>
+          {/* Step 1: ZIP */}
+          <Step n={1} title="Your ZIP code" hint="We use it to find storm alerts near you.">
+            <Field
+              htmlFor="zip"
+              label={resolvedCopy.catalog["form.zip.label"]}
+              hint="Enter your 5-digit ZIP code. Only your ZIP is sent to look up alerts."
+              hintId="zip-hint"
+            >
               <input
                 id="zip"
                 name="zip"
@@ -477,25 +545,18 @@ export default function PlanPage() {
                 value={plan.zip}
                 onChange={(e) => handleZipChange(e.target.value)}
                 aria-describedby="zip-hint"
-                className="min-h-[44px] rounded-md border border-slate-400 bg-white px-3 py-2 text-lg text-storm-navy focus:outline-none"
+                className={`${inputClasses} sm:max-w-xs`}
               />
-              <p id="zip-hint" className="text-sm text-slate-600">
-                Enter your 5-digit ZIP code. Only your ZIP is sent to look up
-                alerts.
-              </p>
-            </div>
-          </section>
+            </Field>
+          </Step>
 
-          {/* Step: Devices */}
-          <section className="flex flex-col gap-3 rounded-lg border border-slate-300 bg-white p-5">
-            <h2 className="text-lg font-semibold text-storm-navy">
-              Your devices
-            </h2>
-            <fieldset className="flex flex-col gap-2">
-              <legend className="text-base font-medium text-storm-navy">
+          {/* Step 2: Devices */}
+          <Step n={2} title="Your devices" hint="Choose every device that needs power.">
+            <fieldset className="flex flex-col gap-3">
+              <legend className={`mb-1 ${labelClasses}`}>
                 {resolvedCopy.catalog["form.deviceTypes.label"]}
               </legend>
-              <div className="flex flex-col gap-2">
+              <div className="grid gap-3 sm:grid-cols-2">
                 {DEVICE_TYPES.map((device) => {
                   const id = `device-${device
                     .replace(/\s+/g, "-")
@@ -504,14 +565,14 @@ export default function PlanPage() {
                     <label
                       key={device}
                       htmlFor={id}
-                      className="flex min-h-[44px] items-center gap-3 text-lg text-storm-navy"
+                      className="flex min-h-[56px] cursor-pointer items-center gap-3 rounded-lg border-2 border-neutral-300 bg-white px-4 py-3 text-lg text-storm-navy transition-colors hover:border-storm-navy has-[:checked]:border-storm-navy has-[:checked]:bg-mist motion-reduce:transition-none"
                     >
                       <input
                         id={id}
                         type="checkbox"
                         checked={plan.deviceTypes.includes(device)}
                         onChange={() => toggleDevice(device)}
-                        className="h-6 w-6 rounded border-slate-400 focus:outline-none"
+                        className={checkboxClasses}
                       />
                       {device}
                     </label>
@@ -519,20 +580,20 @@ export default function PlanPage() {
                 })}
               </div>
             </fieldset>
-          </section>
+          </Step>
 
-          {/* Step: Backup battery + outage start */}
-          <section className="flex flex-col gap-4 rounded-lg border border-slate-300 bg-white p-5">
-            <h2 className="text-lg font-semibold text-storm-navy">
-              Backup battery
-            </h2>
-            <div className="flex flex-col gap-1">
-              <label
-                htmlFor="battery-hours"
-                className="text-base font-medium text-storm-navy"
-              >
-                {resolvedCopy.catalog["form.batteryHours.label"]}
-              </label>
+          {/* Step 3: Backup battery + outage start */}
+          <Step n={3} title="Backup battery" hint="Tell us how long your battery lasts. We show when it may run out.">
+            <Field
+              htmlFor="battery-hours"
+              label={resolvedCopy.catalog["form.batteryHours.label"]}
+              error={
+                batteryHoursValid
+                  ? undefined
+                  : "Enter the number of hours your backup battery lasts. Use 0 or more."
+              }
+              errorId="battery-hours-error"
+            >
               <input
                 id="battery-hours"
                 name="battery-hours"
@@ -546,28 +607,17 @@ export default function PlanPage() {
                 aria-describedby={
                   batteryHoursValid ? undefined : "battery-hours-error"
                 }
-                className="min-h-[44px] rounded-md border border-slate-400 bg-white px-3 py-2 text-lg text-storm-navy focus:outline-none"
+                className={`${inputClasses} sm:max-w-xs`}
               />
-              {!batteryHoursValid ? (
-                <p
-                  id="battery-hours-error"
-                  role="alert"
-                  className="text-sm font-medium text-alert-red"
-                >
-                  Enter the number of hours your backup battery lasts. Use 0 or
-                  more.
-                </p>
-              ) : null}
-            </div>
+            </Field>
 
             {/* Outage-start control for the battery timeline */}
-            <div className="flex flex-col gap-1">
-              <label
-                htmlFor="outage-start"
-                className="text-base font-medium text-storm-navy"
-              >
-                If power goes out at
-              </label>
+            <Field
+              htmlFor="outage-start"
+              label="If power goes out at"
+              hint="Defaults to now. Your battery timeline is based on what you entered."
+              hintId="outage-start-hint"
+            >
               <input
                 id="outage-start"
                 type="datetime-local"
@@ -576,34 +626,28 @@ export default function PlanPage() {
                   const parsed = new Date(e.target.value).getTime();
                   if (!Number.isNaN(parsed)) setOutageStart(parsed);
                 }}
-                className="min-h-[44px] rounded-md border border-slate-400 bg-white px-3 py-2 text-lg text-storm-navy focus:outline-none"
+                aria-describedby="outage-start-hint"
+                className={`${inputClasses} sm:max-w-sm`}
               />
-              <p className="text-sm text-slate-600">
-                Defaults to now. Your battery timeline is based on what you
-                entered.
-              </p>
-            </div>
-          </section>
+            </Field>
+          </Step>
 
-          {/* Step: Emergency contacts */}
-          <section className="flex flex-col gap-3 rounded-lg border border-slate-300 bg-white p-5">
-            <h2 className="text-lg font-semibold text-storm-navy">
-              Emergency contacts
-            </h2>
-            <fieldset className="flex flex-col gap-3">
-              <legend className="text-base font-medium text-storm-navy">
+          {/* Step 4: Emergency contacts */}
+          <Step n={4} title="Emergency contacts" hint="People to call if the power goes out. Names and numbers stay on this device.">
+            <fieldset className="flex flex-col gap-4">
+              <legend className={`mb-1 ${labelClasses}`}>
                 Emergency contacts (up to {MAX_CONTACTS})
               </legend>
 
               {plan.contacts.map((contact, index) => (
                 <div
                   key={index}
-                  className="flex flex-col gap-2 rounded-md border border-slate-300 bg-mist p-3"
+                  className="grid gap-4 rounded-lg border border-neutral-200 bg-neutral-50 p-4 sm:grid-cols-2"
                 >
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1.5">
                     <label
                       htmlFor={`contact-name-${index}`}
-                      className="text-base font-medium text-storm-navy"
+                      className={labelClasses}
                     >
                       {resolvedCopy.catalog["form.contactName.label"]}
                     </label>
@@ -615,13 +659,13 @@ export default function PlanPage() {
                       onChange={(e) =>
                         updateContact(index, "name", e.target.value)
                       }
-                      className="min-h-[44px] rounded-md border border-slate-400 bg-white px-3 py-2 text-lg text-storm-navy focus:outline-none"
+                      className={inputClasses}
                     />
                   </div>
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1.5">
                     <label
                       htmlFor={`contact-phone-${index}`}
-                      className="text-base font-medium text-storm-navy"
+                      className={labelClasses}
                     >
                       {resolvedCopy.catalog["form.contactPhone.label"]}
                     </label>
@@ -633,61 +677,60 @@ export default function PlanPage() {
                       onChange={(e) =>
                         updateContact(index, "phone", e.target.value)
                       }
-                      className="min-h-[44px] rounded-md border border-slate-400 bg-white px-3 py-2 text-lg text-storm-navy focus:outline-none"
+                      className={inputClasses}
                     />
                   </div>
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
                     onClick={() => removeContact(index)}
-                    className="min-h-[44px] self-start rounded-md border border-slate-400 bg-white px-4 py-2 text-base text-storm-navy hover:bg-mist focus:outline-none"
+                    className="justify-self-start sm:col-span-2"
                   >
+                    <Trash2 aria-hidden="true" focusable="false" className="h-5 w-5 shrink-0" />
                     Remove this contact
-                  </button>
+                  </Button>
                 </div>
               ))}
 
-              <button
-                type="button"
+              <Button
+                variant="secondary"
                 onClick={addContact}
                 disabled={atContactLimit}
                 aria-describedby={
                   atContactLimit ? "contact-limit-note" : undefined
                 }
-                className="min-h-[44px] self-start rounded-md border border-storm-navy bg-white px-4 py-2 text-base font-medium text-storm-navy hover:bg-mist focus:outline-none disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400"
+                className="self-start"
               >
+                <Plus aria-hidden="true" focusable="false" className="h-5 w-5 shrink-0" />
                 {resolvedCopy.catalog["form.addContact.label"]}
-              </button>
+              </Button>
               {atContactLimit ? (
                 <p
                   id="contact-limit-note"
                   role="status"
-                  className="text-sm text-slate-600"
+                  className={hintClasses}
                 >
                   You can add up to {MAX_CONTACTS} contacts.
                 </p>
               ) : null}
             </fieldset>
-          </section>
+          </Step>
         </form>
 
         {/* Live storm alerts for the area (shown once a valid ZIP is present). */}
         <section
           aria-labelledby="alerts-heading"
-          className="print-hide flex flex-col gap-3"
+          className={cardClasses({ className: "print-hide flex min-w-0 flex-col gap-4 lg:col-start-1" })}
         >
-          <h2
-            id="alerts-heading"
-            className="text-xl font-semibold text-storm-navy"
-          >
+          <SectionHeading id="alerts-heading" icon={CloudLightning}>
             Storm alerts for your area
-          </h2>
+          </SectionHeading>
           <div aria-live="polite" className="flex flex-col gap-3">
             {!zipValid ? (
-              <p className="text-base text-slate-600">
+              <p className="text-base text-neutral-600">
                 Enter your ZIP code to see active storm alerts.
               </p>
             ) : alertsState.status === "loading" ? (
-              <p className="text-base text-slate-600">Loading storm alerts…</p>
+              <p className="text-base text-neutral-600">Loading storm alerts…</p>
             ) : alertsState.status === "error" ? (
               <p className="text-base text-alert-red">{alertsState.message}</p>
             ) : alertsState.status === "loaded" ? (
@@ -696,7 +739,7 @@ export default function PlanPage() {
                   source={alertsState.source}
                   updatedAt={alertsState.updatedAt}
                 />
-                <p className="text-sm text-slate-600">
+                <p className="text-sm text-neutral-600">
                   Alerts are matched at the county level, so these are the
                   active Massachusetts alerts that may affect your area.
                 </p>
@@ -705,20 +748,27 @@ export default function PlanPage() {
                     No active storm alerts right now.
                   </p>
                 ) : (
-                  <ul className="flex flex-col gap-2">
-                    {alertsState.alerts.map((alert) => (
-                      <li
-                        key={alert.id}
-                        className="rounded-md border border-slate-300 bg-white p-3"
-                      >
-                        <p className="font-medium text-storm-navy">
-                          {alert.headline ?? "Weather alert"}
-                        </p>
-                        <p className="text-sm text-storm-navy">
-                          Severity: {alert.severity}
-                        </p>
-                      </li>
-                    ))}
+                  <ul className="flex flex-col gap-3">
+                    {alertsState.alerts.map((alert) => {
+                      const tone = alertTone(alert.severity);
+                      const Icon = tone.icon;
+                      return (
+                        <li
+                          key={alert.id}
+                          className={`flex items-start gap-3 rounded-lg border border-neutral-200 border-l-[6px] p-4 shadow-card ${tone.card}`}
+                        >
+                          <Icon aria-hidden="true" focusable="false" className={`mt-0.5 h-6 w-6 flex-none ${tone.icon_color}`} />
+                          <div className="flex flex-col gap-1">
+                            <p className="text-lg font-bold leading-snug text-storm-navy">
+                              {alert.headline ?? "Weather alert"}
+                            </p>
+                            <p className="text-base font-semibold text-storm-navy">
+                              Severity: {alert.severity}
+                            </p>
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
               </>
@@ -729,7 +779,7 @@ export default function PlanPage() {
         {/* The resident's Outage Plan card. */}
         <section
           aria-labelledby="card-heading"
-          className="print-default flex flex-col gap-4"
+          className="print-default flex min-w-0 flex-col gap-4 lg:sticky lg:top-6 lg:col-start-2 lg:row-span-3 lg:row-start-1 lg:max-h-[calc(100vh-3rem)] lg:self-start lg:overflow-y-auto lg:pb-2 print:static print:max-h-none print:overflow-visible"
         >
           <h2 id="card-heading" className="sr-only">
             Your outage plan
@@ -752,23 +802,17 @@ export default function PlanPage() {
           {/* Share / copy / print controls (do not print). */}
           <div className="print-hide flex flex-col gap-2">
             <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={handleShare}
-                className="min-h-[44px] rounded-md bg-power-amber px-5 py-2 text-base font-semibold text-power-ink hover:brightness-95 focus:outline-none"
-              >
+              <Button variant="primary" onClick={handleShare}>
+                <Share2 aria-hidden="true" focusable="false" className="h-5 w-5 shrink-0" />
                 {resolvedCopy.catalog["action.share"]}
-              </button>
-              <button
-                type="button"
-                onClick={handlePrint}
-                className="min-h-[44px] rounded-md border border-storm-navy bg-white px-5 py-2 text-base font-medium text-storm-navy hover:bg-mist focus:outline-none"
-              >
+              </Button>
+              <Button variant="secondary" onClick={handlePrint}>
+                <Printer aria-hidden="true" focusable="false" className="h-5 w-5 shrink-0" />
                 {resolvedCopy.catalog["action.print"]}
-              </button>
+              </Button>
             </div>
             {shareNote ? (
-              <p role="status" className="text-sm text-slate-600">
+              <p role="status" className={hintClasses}>
                 {shareNote}
               </p>
             ) : null}
@@ -778,12 +822,12 @@ export default function PlanPage() {
         {/* Fridge card: screen controls (do not print). */}
         <section
           aria-labelledby="fridge-heading"
-          className="print-hide flex flex-col gap-3 rounded-lg border border-slate-300 bg-white p-5"
+          className={cardClasses({ className: "print-hide flex min-w-0 flex-col gap-4 lg:col-start-1" })}
         >
-          <h2 id="fridge-heading" className="text-xl font-semibold text-storm-navy">
+          <SectionHeading id="fridge-heading" icon={QrCode}>
             Fridge card
-          </h2>
-          <p className="text-base text-storm-navy">
+          </SectionHeading>
+          <p className="text-base leading-relaxed text-storm-navy">
             Print a one-page card with large text to keep on your fridge. Scan the
             code with a phone to open this plan.
           </p>
@@ -794,25 +838,23 @@ export default function PlanPage() {
                 alt="QR code that opens this plan on a phone"
                 width={160}
                 height={160}
-                className="h-40 w-40 rounded border border-slate-300"
+                className="h-40 w-40 rounded-md border border-neutral-300 bg-white p-1 shadow-card"
               />
             ) : null}
             <p className="max-w-xs text-base font-semibold text-storm-navy">
               {QR_TRUST_NOTE}
             </p>
           </div>
-          <p className="text-sm text-slate-600">
+          <p className={hintClasses}>
             The plan is stored in the part of the link after &ldquo;#&rdquo;, which
             is never sent to a server.
           </p>
-          <button
-            type="button"
-            onClick={printFridgeCard}
-            className="min-h-[44px] self-start rounded-md border border-storm-navy bg-white px-5 py-2 text-base font-semibold text-storm-navy hover:bg-mist"
-          >
+          <Button variant="secondary" onClick={printFridgeCard} className="self-start">
+            <Printer aria-hidden="true" focusable="false" className="h-5 w-5 shrink-0" />
             Print fridge card
-          </button>
+          </Button>
         </section>
+        </div>
 
         {/* Fridge card: print-only layout. */}
         <div className="fridge-print">

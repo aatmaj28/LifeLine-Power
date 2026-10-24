@@ -71,18 +71,18 @@ export function DataSourceBadge({
   return (
     <dl
       className={[
-        "inline-flex flex-wrap items-center gap-x-3 gap-y-1 rounded border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-800",
+        "inline-flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700",
         className ?? "",
       ]
         .join(" ")
         .trim()}
     >
       <div className="flex items-baseline gap-1">
-        <dt className="font-medium">Data source:</dt>
+        <dt className="font-semibold text-storm-navy">Data source:</dt>
         <dd>{sourceLabel}</dd>
       </div>
       <div className="flex items-baseline gap-1">
-        <dt className="font-medium">Last updated:</dt>
+        <dt className="font-semibold text-storm-navy">Last updated:</dt>
         <dd>
           <time dateTime={isoDateTime}>{updatedLabel}</time>
         </dd>
