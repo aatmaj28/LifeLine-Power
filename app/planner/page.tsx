@@ -292,23 +292,28 @@ export default function PlannerPage() {
     : undefined;
   const activeCountyOutage = layers.outages ? replayCountyStatus : undefined;
 
-  // One scoring pass shared by the map circles and popups (the ranked list runs
-  // the same helper), so both always show the same 0–100 score and reasons.
+  // One scoring pass shared by the map circles and popups, the outreach
+  // comparison, and (via the same helper) the ranked list, so all of them always
+  // use the same scores and order.
+  const rankedRows = useMemo(
+    () => (dataset ? buildRankedRows(dataset, activeSeverityByZip, activeOutageByZip) : undefined),
+    [dataset, activeSeverityByZip, activeOutageByZip],
+  );
   const scores = useMemo(() => {
-    if (!dataset) return undefined;
+    if (!rankedRows) return undefined;
     const map = new Map<string, ZipScore>();
-    for (const { result } of buildRankedRows(
-      dataset,
-      activeSeverityByZip,
-      activeOutageByZip,
-    )) {
+    for (const { result } of rankedRows) {
       map.set(result.zip, {
         score100: displayScore(result.score),
         reasons: result.reasons,
       });
     }
     return map;
-  }, [dataset, activeSeverityByZip, activeOutageByZip]);
+  }, [rankedRows]);
+  const priorityOrder = useMemo(
+    () => rankedRows?.map((r) => r.result.zip),
+    [rankedRows],
+  );
 
   // Clicking a ZIP on the map filters the list to that ZIP's county (so its row
   // is always present) and highlights the row.
@@ -477,6 +482,7 @@ export default function PlannerPage() {
                   zips={dataset.zip}
                   hour={replayHour}
                   onHourChange={setReplayHour}
+                  priorityOrder={priorityOrder}
                 />
               )}
               <MapLegend

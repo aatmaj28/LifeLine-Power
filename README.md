@@ -64,8 +64,9 @@ the link that is never sent to a server.)
     alerts, Outages. A toggle removes that signal from both the map and the
     ranking, so what you see is what is scored.
 - A ranked **outreach-priority** list combining dependent population, alert
-  severity, and outage status. Each row shows a 0 to 100 score **and the
-  reasons** behind it.
+  severity, and outage status. Each row shows a score **and the reasons**
+  behind it. Residents add 0 to 100 points (the largest ZIP gets 100), each
+  alert level adds 100, and an active outage adds 100.
 - **Storm Scenario** (simulated outages over Eastern MA) and **Storm Replay**
   (a simulated 12-hour nor'easter, hour by hour). Both are always labeled
   "Simulated", and only one runs at a time.
@@ -135,7 +136,13 @@ npm test
 - **axe** accessibility checks run against `/plan`, `/planner` (including Storm
   Replay at its busiest hour), and the fridge card.
 
-Current status: 163 tests across 42 files pass; `typecheck` and `build` are
+- The outreach comparison has property tests (coverage never decreases as N
+  grows, stays between 0 and 100%, is identical for the same seed, and the
+  sentence never overstates). The claim "PowerPlan order beats random" is proven
+  only where it is true (no weather alerts, and the real replay frames); a
+  counterexample with alerts is kept as a test and explained in the journal.
+
+Current status: 176 tests across 45 files pass; `typecheck` and `build` are
 clean.
 
 > Note: automated axe checks catch many issues but not all. Full WCAG 2.2 AA
@@ -172,6 +179,14 @@ Greater Boston, then power is restored. It peaks at simulated hour 7 with about
   the counter says "about".
 - With reduced motion turned on in your system settings, Play moves one hour per
   press and nothing animates.
+- **Outreach comparison (Simulated):** inside Storm Replay, pick Top 10, 20, or
+  50. Three bars show what share of residents in simulated outage areas live in
+  the ZIPs called, in PowerPlan priority order, random order (average of 500
+  seeded shuffles), and alphabetical order, with one plain sentence such as
+  "Calling the top 20 ZIPs in PowerPlan order reaches 58% of affected
+  residents, vs 4% in random order." The sentence only claims an advantage when
+  the numbers show one: when live weather alerts rank ZIPs outside the outage
+  area higher, PowerPlan order can reach fewer, and the sentence says so.
 - The counter logic is a pure module (`lib/app/replay/replay.ts`) with property
   tests, and `node tools/powerplan-mcp/verify-replay.mjs` cross-checks every
   frame against the MCP server.

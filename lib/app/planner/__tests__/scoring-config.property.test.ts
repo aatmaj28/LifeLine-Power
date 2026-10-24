@@ -16,12 +16,13 @@ import {
  * severity weight.
  *
  * For any `EmpowerDataset`, `buildScoringConfig(dataset).dependentMax` equals the
- * maximum `power_dependent_dme.value` across the dataset's ZIP and county records
- * (and is positive), and `severityWeight` is strictly increasing in
- * `SEVERITY_ORDER` (none < Minor < Moderate < Severe < Extreme).
+ * maximum `power_dependent_dme.value` across the dataset's ZIP records (and is
+ * positive), and `severityWeight` is strictly increasing in `SEVERITY_ORDER`
+ * (none < Minor < Moderate < Severe < Extreme).
  *
- * `buildScoringConfig` only reads `dataset.zip` and `dataset.county` (verified in
- * the implementation), so the remaining dataset fields are built empty.
+ * Updated with the normalization fix (docs/decisions.md): the max used to
+ * include county totals, which put the denominator on the wrong scale. County
+ * records are still generated here to prove they no longer affect the max.
  *
  * Validates: Requirements 7.7
  */
@@ -89,17 +90,18 @@ describe("Feature: app, Property 11: Scoring config uses the dataset-wide max an
       fc.property(datasetArb, (dataset) => {
         const config = buildScoringConfig(dataset);
 
-        // Expected dependent max across BOTH zip and county records, guarded to
-        // at least 1 so it is always positive.
-        const values = [
-          ...dataset.zip.map((r) => r.powerDependentDme.value),
-          ...dataset.county.map((r) => r.powerDependentDme.value),
-        ];
+        // Expected dependent max across ZIP records only, guarded to at least 1
+        // so it is always positive. County totals must not change it.
+        const values = dataset.zip.map((r) => r.powerDependentDme.value);
         const rawMax = values.length === 0 ? 0 : Math.max(...values);
         const expectedMax = Math.max(1, rawMax);
 
         expect(config.dependentMax).toBe(expectedMax);
         expect(config.dependentMax).toBeGreaterThanOrEqual(1);
+        const withoutCounties: EmpowerDataset = { ...dataset, county: [] };
+        expect(buildScoringConfig(withoutCounties).dependentMax).toBe(
+          config.dependentMax,
+        );
 
         // severityWeight strictly increasing along SEVERITY_ORDER.
         for (let i = 1; i < ORDERED_SEVERITIES.length; i++) {

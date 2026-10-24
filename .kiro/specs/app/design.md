@@ -208,7 +208,7 @@ export function aggregateCountyDependents(
 
 // lib/app/planner/scoring-config.ts
 import type { EmpowerDataset, ScoringConfig } from "@/lib/risk-engine";
-/** dependentMax = dataset-wide max power_dependent_dme (>=1); strictly
+/** dependentMax = max ZIP power_dependent_dme (>=1); strictly
  *  increasing severityWeight none<Minor<Moderate<Severe<Extreme. */
 export function buildScoringConfig(dataset: EmpowerDataset): ScoringConfig { /* ... */ }
 
@@ -361,7 +361,7 @@ For any list of `EmpowerZipRecord`s, `aggregateCountyDependents` yields, for eac
 
 ### Property 11: Scoring config uses the dataset-wide max and a strictly-increasing severity weight
 
-For any `EmpowerDataset`, `buildScoringConfig(dataset).dependentMax` equals the maximum `power_dependent_dme.value` across the dataset's ZIP and county records (and is positive), and `severityWeight` is strictly increasing in `SEVERITY_ORDER` (none < Minor < Moderate < Severe < Extreme).
+For any `EmpowerDataset`, `buildScoringConfig(dataset).dependentMax` equals the maximum `power_dependent_dme.value` across the dataset's ZIP records (and is positive; county totals are excluded so the denominator is on the same per-ZIP scale as the numerator — changed after spec 3, see docs/decisions.md), and `severityWeight` is strictly increasing in `SEVERITY_ORDER` (none < Minor < Moderate < Severe < Extreme).
 
 **Validates: Requirements 7.7**
 

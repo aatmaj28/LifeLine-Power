@@ -24,6 +24,7 @@ import {
 } from "@/lib/app/replay/replay";
 
 import DataSourceBadge from "./DataSourceBadge";
+import OutreachComparison from "./OutreachComparison";
 import SimulatedBadge from "./SimulatedBadge";
 
 export const PLAY_INTERVAL_MS = 1500;
@@ -34,6 +35,8 @@ export interface StormReplayProps {
   zips: readonly ZipLite[];
   hour: number;
   onHourChange: (hour: number) => void;
+  /** ZIPs in PowerPlan priority order for the current frame (for the comparison). */
+  priorityOrder?: readonly string[];
 }
 
 function prefersReducedMotion(): boolean {
@@ -47,7 +50,7 @@ function prefersReducedMotion(): boolean {
 const buttonClass =
   "inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-2 rounded-md border border-storm-navy bg-white px-4 py-2 text-base font-semibold text-storm-navy hover:bg-mist disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400";
 
-export function StormReplay({ file, zips, hour, onHourChange }: StormReplayProps) {
+export function StormReplay({ file, zips, hour, onHourChange, priorityOrder }: StormReplayProps) {
   const last = file.frames.length - 1;
   const current = clampHour(hour, file.frames.length);
   const frame = file.frames[current];
@@ -217,6 +220,10 @@ export function StormReplay({ file, zips, hour, onHourChange }: StormReplayProps
           </div>
         </div>
       </div>
+
+      {priorityOrder ? (
+        <OutreachComparison frame={frame} zips={zips} priorityOrder={priorityOrder} />
+      ) : null}
     </section>
   );
 }

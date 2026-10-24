@@ -84,11 +84,14 @@ export function reasonApplies(reason: Reason): boolean {
 /**
  * Priority buckets for the map legend, from the display score.
  *
- * The buckets follow how scores actually move: with the current scoring config,
- * the dependents factor adds at most a few points (ZIP counts are normalized by
- * the dataset-wide max, which includes county totals), while each alert level
- * adds about 100 and an active outage adds about 100. So the buckets step at
- * 100s. Circle SIZE still shows the dependent count.
+ * Score range with the current config: dependents add 0 to 100 (the largest ZIP,
+ * 444 residents, gets 100), each alert level adds 100 (Minor 100 up to Extreme
+ * 400), and an active outage adds 100. So a ZIP with no alert or outage scores
+ * 0 to 100 on people alone, and alerts or outages push it above 100.
+ *   Lower  0–29    fewer than about 130 residents, no alert or outage
+ *   Medium 30–99   more residents, no alert or outage
+ *   Higher 100–199 an outage or a Minor alert, or a large ZIP with one
+ *   Highest 200+   stronger alerts, or several signals together
  */
 export type PriorityBucket = "lower" | "medium" | "higher" | "highest";
 
@@ -97,10 +100,10 @@ export const PRIORITY_BUCKETS: ReadonlyArray<{
   label: string;
   min: number;
 }> = [
-  { bucket: "highest", label: "Highest (300 or more)", min: 300 },
-  { bucket: "higher", label: "Higher (200 to 299)", min: 200 },
-  { bucket: "medium", label: "Medium (100 to 199)", min: 100 },
-  { bucket: "lower", label: "Lower (under 100, no alert or outage)", min: 0 },
+  { bucket: "highest", label: "Highest (200 or more)", min: 200 },
+  { bucket: "higher", label: "Higher (100 to 199)", min: 100 },
+  { bucket: "medium", label: "Medium (30 to 99)", min: 30 },
+  { bucket: "lower", label: "Lower (0 to 29)", min: 0 },
 ];
 
 /** Bucket a 0–100 display score for the legend and circle color. */

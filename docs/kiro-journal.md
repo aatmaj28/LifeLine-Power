@@ -272,6 +272,71 @@ directly in the same format and tasks were ticked off in `tasks.md` by hand.
   violations. One manual WCAG 1.4.13 fix was made to the replay tooltip (it can
   be dismissed with Escape and hovered).
 
+## After spec 3: scoring fix and outreach comparison
+
+### Scoring normalization fix
+
+The MCP check in spec 3 showed that the number of people barely moved a ZIP's
+score: the config divided each ZIP's count by the largest **county** total
+(6,985) instead of the largest **ZIP** (444), so residents added at most about 6
+of 100 points. The fix is one line in `lib/app/planner/scoring-config.ts`: take
+the max over ZIP records only. Now the largest ZIP gets 100 points from people
+alone, on the same scale as an alert level or an outage. `lib/risk-engine` did
+not change.
+
+Honest note on the tests: the request expected every existing property test to
+pass unchanged. All did except **Property 11**, which asserted the old rule
+itself ("max over ZIP and county records"). That test was updated to the new
+rule and now also checks that county totals do not affect the max. Monotonicity,
+the zero-dependent bound, the outage bonus, and stable ranking all passed
+untouched, as expected for any fixed positive max. The map legend buckets moved
+to match the new range (0–29, 30–99, 100–199, 200+).
+
+### Outreach comparison (simulated)
+
+Storm Replay now has an "Outreach comparison" panel: for the current simulated
+hour, what share of residents in simulated outage areas are reached by calling
+the top 10, 20, or 50 ZIPs in PowerPlan order, random order (average of 500
+seeded shuffles), or alphabetical order. The math is a pure module
+(`lib/app/replay/outreach.ts`). Property tests cover: coverage never decreases as
+N grows (all three orders), coverage stays between 0 and 100%, results are
+identical for the same seed, and the sentence only claims an advantage when the
+rounded numbers show one.
+
+**The claim "PowerPlan order reaches at least as many as random" — counterexample
+found.** We wrote it as a property over generated data with live weather alerts
+in the score, and fast-check found a counterexample quickly (seed 7, 1,000 runs).
+Shrunk case, N = 10, outages in counties 25001, 25017, 25023:
+
+- Two ZIPs with **Extreme** alerts but only "11 or fewer" residents (02218,
+  02684) score 503 and lead the list; three more alerted ZIPs with 11 residents
+  follow.
+- ZIP 02178 in Suffolk (25025) has a **Moderate** alert but is **outside** the
+  simulated outage area. It scores 203 and takes one of the 10 calls.
+- ZIP 01210 (204 residents, in outage, no alert) scores 147 and ranks 11th, so it
+  is not called.
+- Result: PowerPlan order reaches **86%** of affected residents; the random
+  average reaches **90%**.
+
+Why: PowerPlan's score is about overall outreach priority (people, alerts, and
+outages), not "residents in outage areas only". An alert outside the outage area
+legitimately raises a ZIP's priority, but it does not help this particular
+measure. We did **not** change scoring to make the claim pass. Instead:
+
+1. The general claim is kept as an expected-counterexample test, so if scoring
+   ever changes in a way that removes the counterexample, we will notice.
+2. A narrower claim is proven for any data: **with no weather alerts**, PowerPlan
+   order reaches at least as many as any order, including every random shuffle
+   (an affected ZIP with residents always outscores every unaffected ZIP, and
+   affected ZIPs are sorted by residents). 300 runs, no counterexample.
+3. The claim is checked on the **real** emPOWER data and the **real** replay
+   frames (no alerts in the replay): it holds for every frame and every N, and
+   PowerPlan order also beats alphabetical order. Example: at simulated hour 3,
+   the top 20 in PowerPlan order reach 58% of affected residents vs 4% in random
+   order and 0% alphabetically; at the peak (hour 7) it is 23% vs 4%.
+4. The UI sentence is built from the numbers. With live alerts in play it can
+   honestly read "...less than the Y% reached in random order this hour."
+
 ## Other notable decisions (see `docs/decisions.md`)
 
 - `react-leaflet` v5 installs cleanly against React 19 (v4 does not), so no
@@ -305,10 +370,9 @@ building spec 3. Calls go over real MCP stdio through `tools/powerplan-mcp/smoke
 5. **Checking how the ranking moves** — a one-off script on the MCP data showed
    that ZIPs in simulated outage jump to the top (hour 1: Dukes and Nantucket
    ZIPs lead; hour 7: 02360 Plymouth leads at 106). It also exposed that the
-   dependents factor tops out at about 6 points, because the scoring config
-   normalizes ZIP counts by a max that includes county totals (6,985). So the
-   map legend buckets were changed to step at 100s, which is how scores
-   actually move. Scoring was not changed; this is flagged in `docs/decisions.md`.
+   dependents factor topped out at about 6 points, because the scoring config
+   normalized ZIP counts by a max that included county totals (6,985). It was
+   flagged in `docs/decisions.md` and fixed afterwards (see "After spec 3").
    It also showed that `zip_sum_power_dependent` equals the county CSV total for
    every county, so county-level frames can be summed from ZIPs safely.
 4. **Verifying the replay counter** — `tools/powerplan-mcp/verify-replay.mjs`
