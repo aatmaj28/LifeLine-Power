@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "powerplan-data": {
+      "command": "node",
+      "args": ["tools/powerplan-mcp/server.mjs"],
+      "env": {},
+      "disabled": false,
+      "autoApprove": ["county_summary", "top_zips", "zip_detail"]
+    }
+  }
+}
