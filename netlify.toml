@@ -1,0 +1,11 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# The risk-engine loaders read data/ at runtime via process.cwd(), which
+# Next's file tracing can't see. Ship the files with the server functions.
+[functions]
+  included_files = ["data/**"]

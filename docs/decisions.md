@@ -125,3 +125,12 @@ verified by the axe tests in `npm test` and at checkpoints instead.
   real replay frames. With alerts in the score, a counterexample exists
   (alerted ZIPs outside the outage area outrank affected ZIPs). Scoring was not
   changed to hide this; see the Kiro journal.
+
+## Hosting on Netlify
+
+- **Deployed to Netlify** (`powerplan-ma.netlify.app`) with the Netlify CLI,
+  not Vercel as first planned in the tech steering.
+- **`included_files = ["data/**"]`** in `netlify.toml`, because the loaders
+  read `data/` via `process.cwd()` at runtime, which file tracing cannot see.
+- **Visitor access:** Netlify team login applies to non-production deploys only.
+  Production is public; previews stay team-only.

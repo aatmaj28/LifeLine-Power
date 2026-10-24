@@ -8,7 +8,7 @@ outage can become a medical emergency within hours. HHS already publishes a risk
 map; PowerPlan turns that data into **personal action** for residents and
 **prioritized outreach** for planners.
 
-- **Live demo:** _deploy pending — add the Vercel URL here_
+- **Live demo:** [powerplan-ma.netlify.app](https://powerplan-ma.netlify.app)
 - Built for Hackachusetts 2026, Track 03 (Energy & climate tech).
 
 ## Who it helps

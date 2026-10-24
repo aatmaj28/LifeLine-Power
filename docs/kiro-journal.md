@@ -103,7 +103,8 @@ and returns honest labels ("11 or fewer") every time. Every use is listed in the
 
 ## Kiro powers used
 
-None.
+- **`netlify-deployment`** — used to deploy the app (see "Deploying with the
+  Netlify power" below).
 
 ## What property-based tests caught / verified
 
@@ -394,3 +395,26 @@ building spec 3. Calls go over real MCP stdio through `tools/powerplan-mcp/smoke
    match, including masked-ZIP counts (peak: about 23,117 residents and 33
    masked ZIPs at simulated hour 7). Statewide ZIP total is 40,572, the ceiling
    the property tests enforce.
+
+## Deploying with the Netlify power
+
+The `netlify-deployment` power ships a CLI-first guide (no MCP tools, no
+steering files). We followed its steps: install the CLI, `netlify login`,
+check `netlify status`, create and link a new site
+(`netlify sites:create --name powerplan-ma`), then `netlify deploy --prod`.
+Live at <https://powerplan-ma.netlify.app>.
+
+Two real issues:
+
+- **`data/` files at runtime.** The emPOWER and outage loaders find `data/`
+  through `process.cwd()` when they run, so Next's file tracing does not bundle
+  the CSV/JSON files. `netlify.toml` adds `[functions] included_files =
+  ["data/**"]`. Checked live: `/api/empower` returns 510 ZIP, 14 county, and
+  5,100 monthly records, matching the CSV row counts, and the first record
+  (ZIP 02360, 444) matches the CSV line.
+- **Every route returned 401.** The new site picked up Netlify team login for
+  all deploys (`sso_login_context: "all"`), so the "live" URL redirected to a
+  Netlify login. This was set to `non_production`: production is public and
+  preview deploys stay team-only. After that, `/`, `/plan`, `/planner`, and
+  `/api/empower` all returned 200. Lesson: a deploy that "succeeded" still has
+  to be opened as an anonymous visitor.
