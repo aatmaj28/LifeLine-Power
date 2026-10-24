@@ -239,149 +239,180 @@ export default function PlannerPage() {
   }, [stormScenario, dataset, outages]);
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-7xl flex-col gap-6 px-4 py-8">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold text-gray-900">
-          Planner dashboard
-        </h1>
-        <p className="max-w-3xl text-base leading-relaxed text-gray-900">
-          See where power-dependent Medicare residents live across
-          Massachusetts, overlaid with active weather alerts, so you can focus
-          outreach where it matters most.
-        </p>
-        <p className="max-w-3xl text-sm leading-relaxed text-gray-700">
-          Counts come from HHS emPOWER. They are aggregated, de-identified
-          Medicare data, not a list of individuals. A count of &ldquo;11 or
-          fewer&rdquo; means the source hid the exact number to protect privacy.
-        </p>
+    <main className="flex min-h-screen flex-col">
+      {/* Navy page header, consistent with the landing page. */}
+      <header className="bg-storm-navy">
+        <div className="mx-auto w-full max-w-7xl px-4 py-5">
+          <h1 className="text-3xl font-bold text-white">Planner dashboard</h1>
+        </div>
       </header>
 
-      {/* Storm Scenario toggle. Off = live data only. On = add the simulated
-          outage layer, badged as simulated. */}
-      <section
-        aria-labelledby="scenario-heading"
-        className="flex flex-col gap-3 rounded-lg border border-gray-300 bg-gray-50 p-4"
-      >
-        <h2 id="scenario-heading" className="text-lg font-semibold text-gray-900">
-          Storm Scenario
-        </h2>
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="inline-flex min-h-[44px] items-center gap-3 text-base text-gray-900">
-            <input
-              type="checkbox"
-              checked={stormScenario}
-              onChange={(e) => setStormScenario(e.target.checked)}
-              className="h-5 w-5 rounded border-gray-400 text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2"
-            />
-            <span>
-              Simulate a nor&rsquo;easter with outages over Eastern
-              Massachusetts
-            </span>
-          </label>
-          {stormScenario && <SimulatedBadge label="Simulated outages" />}
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8">
+        <div className="flex flex-col gap-2">
+          <p className="max-w-3xl text-base leading-relaxed text-storm-navy">
+            See where power-dependent Medicare residents live across
+            Massachusetts, overlaid with active weather alerts, so you can focus
+            outreach where it matters most.
+          </p>
+          <p className="max-w-3xl text-sm leading-relaxed text-slate-600">
+            Counts come from HHS emPOWER. They are aggregated, de-identified
+            Medicare data, not a list of individuals. A count of &ldquo;11 or
+            fewer&rdquo; means the source hid the exact number to protect
+            privacy.
+          </p>
         </div>
-        {stormScenario && outages.status === "ok" && outages.updatedAt && (
-          <DataSourceBadge
-            source="simulated"
-            updatedAt={outages.updatedAt}
-            className="self-start"
-          />
+
+        {/* Storm Scenario toggle. Off = live data only. On = add the simulated
+            outage layer, badged as simulated. */}
+        <section
+          aria-labelledby="scenario-heading"
+          className="flex flex-col gap-3 rounded-lg border border-slate-300 bg-white p-4"
+        >
+          <h2
+            id="scenario-heading"
+            className="text-lg font-semibold text-storm-navy"
+          >
+            Storm Scenario
+          </h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="inline-flex min-h-[44px] items-center gap-3 text-base text-storm-navy">
+              <input
+                type="checkbox"
+                checked={stormScenario}
+                onChange={(e) => setStormScenario(e.target.checked)}
+                className="h-6 w-6 rounded border-slate-400 text-power-amber focus-visible:outline-none"
+              />
+              <span>
+                Simulate a nor&rsquo;easter with outages over Eastern
+                Massachusetts
+              </span>
+            </label>
+            {stormScenario && <SimulatedBadge label="Simulated outages" />}
+          </div>
+          {stormScenario && outages.status === "ok" && outages.updatedAt && (
+            <DataSourceBadge
+              source="simulated"
+              updatedAt={outages.updatedAt}
+              className="self-start"
+            />
+          )}
+          {stormScenario && outages.status === "error" && (
+            <p role="alert" className="text-base text-alert-red">
+              The simulated outage layer could not load: {outages.errorMessage}
+            </p>
+          )}
+        </section>
+
+        {/* Full-width simulated banner, shown only while the scenario is on. */}
+        {stormScenario && (
+          <div className="w-full rounded-lg border border-power-amber bg-power-amber/15 px-4 py-3 text-base font-medium text-storm-navy">
+            Simulated storm scenario is on. The outage layer below is simulated
+            data, not a live outage feed.
+          </div>
         )}
-        {stormScenario && outages.status === "error" && (
-          <p role="alert" className="text-base text-red-800">
-            The simulated outage layer could not load: {outages.errorMessage}
+
+        {/* Data provenance for the base layers. */}
+        <section
+          aria-label="Data sources"
+          className="flex flex-wrap items-center gap-3"
+        >
+          {empower.status === "ok" && empower.updatedAt && (
+            <DataSourceBadge
+              source="empower-aggregated-deidentified-medicare"
+              updatedAt={empower.updatedAt}
+            />
+          )}
+          {alerts.status === "ok" && alerts.updatedAt && (
+            <DataSourceBadge
+              source="nws-live-alert"
+              updatedAt={alerts.updatedAt}
+            />
+          )}
+        </section>
+
+        {/* Alerts errors are surfaced honestly but do not block the map/list. */}
+        {alerts.status === "error" && (
+          <p role="alert" className="text-base text-alert-red">
+            Live weather alerts could not load: {alerts.errorMessage}. The map
+            and list below still show the resident data.
           </p>
         )}
-      </section>
 
-      {/* Data provenance for the base layers. */}
-      <section
-        aria-label="Data sources"
-        className="flex flex-wrap items-center gap-3"
-      >
-        {empower.status === "ok" && empower.updatedAt && (
-          <DataSourceBadge
-            source="empower-aggregated-deidentified-medicare"
-            updatedAt={empower.updatedAt}
-          />
+        {/* Base data states. */}
+        {empower.status === "loading" && (
+          <p className="text-base text-storm-navy">
+            Loading resident data&hellip;
+          </p>
         )}
-        {alerts.status === "ok" && alerts.updatedAt && (
-          <DataSourceBadge source="nws-live-alert" updatedAt={alerts.updatedAt} />
+
+        {empower.status === "error" && (
+          <p role="alert" className="text-base text-alert-red">
+            The resident data could not load: {empower.errorMessage}. No data is
+            shown rather than guessing.
+          </p>
         )}
-      </section>
 
-      {/* Alerts errors are surfaced honestly but do not block the map/list. */}
-      {alerts.status === "error" && (
-        <p role="alert" className="text-base text-red-800">
-          Live weather alerts could not load: {alerts.errorMessage}. The map and
-          list below still show the resident data.
-        </p>
-      )}
-
-      {/* Base data states. */}
-      {empower.status === "loading" && (
-        <p className="text-base text-gray-800">Loading resident data&hellip;</p>
-      )}
-
-      {empower.status === "error" && (
-        <p role="alert" className="text-base text-red-800">
-          The resident data could not load: {empower.errorMessage}. No data is
-          shown rather than guessing.
-        </p>
-      )}
-
-      {empower.status === "ok" && dataset && (
-        <div className="flex flex-col gap-8">
-          {/* Map view. The ranked list below is the full non-map alternative. */}
-          <section aria-labelledby="map-heading" className="flex flex-col gap-3">
-            <h2 id="map-heading" className="text-xl font-semibold text-gray-900">
-              County map
-            </h2>
-            <div className="h-[28rem] w-full overflow-hidden rounded-lg border border-gray-300">
-              <CountyChoropleth
-                dataset={dataset as unknown as EmpowerDataset}
-                countySeverity={countySeverity}
-                selectedCountyFips={selectedCountyFips}
-                onSelectCounty={(fips) =>
-                  setSelectedCountyFips((current) =>
-                    current === fips ? undefined : fips,
-                  )
-                }
-              />
-            </div>
-            {selectedCountyFips && (
-              <button
-                type="button"
-                onClick={() => setSelectedCountyFips(undefined)}
-                className="inline-flex min-h-[44px] w-fit items-center rounded border border-gray-400 bg-white px-4 py-2 text-base text-gray-900 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2"
-              >
-                Show all counties
-              </button>
-            )}
-          </section>
-
-          {/* Ranked list: the non-map path to the same outreach-priority data. */}
-          <section
-            aria-labelledby="ranked-heading"
-            className="flex flex-col gap-3"
-          >
-            <h2
-              id="ranked-heading"
-              className="text-xl font-semibold text-gray-900"
+        {empower.status === "ok" && dataset && (
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            {/* Map view (left on wide screens). The ranked list is the full
+                non-map alternative. */}
+            <section
+              aria-labelledby="map-heading"
+              className="flex flex-col gap-3"
             >
-              Outreach priority
-              {selectedCountyFips ? ` (county ${selectedCountyFips})` : ""}
-            </h2>
-            <RankedList
-              dataset={dataset as unknown as EmpowerDataset}
-              severityByZip={severityByZip}
-              outageByZip={outageByZip}
-              countyFips={selectedCountyFips}
-              limit={100}
-            />
-          </section>
-        </div>
-      )}
+              <h2
+                id="map-heading"
+                className="text-xl font-semibold text-storm-navy"
+              >
+                County map
+              </h2>
+              <div className="h-[32rem] w-full overflow-hidden rounded-lg border border-slate-300 lg:h-[40rem]">
+                <CountyChoropleth
+                  dataset={dataset as unknown as EmpowerDataset}
+                  countySeverity={countySeverity}
+                  selectedCountyFips={selectedCountyFips}
+                  onSelectCounty={(fips) =>
+                    setSelectedCountyFips((current) =>
+                      current === fips ? undefined : fips,
+                    )
+                  }
+                />
+              </div>
+              {selectedCountyFips && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedCountyFips(undefined)}
+                  className="inline-flex min-h-[44px] w-fit items-center rounded border border-slate-400 bg-white px-4 py-2 text-base text-storm-navy hover:bg-mist focus-visible:outline-none"
+                >
+                  Show all counties
+                </button>
+              )}
+            </section>
+
+            {/* Ranked list (right on wide screens): the non-map path to the
+                same outreach-priority data. */}
+            <section
+              aria-labelledby="ranked-heading"
+              className="flex flex-col gap-3"
+            >
+              <h2
+                id="ranked-heading"
+                className="text-xl font-semibold text-storm-navy"
+              >
+                Outreach priority
+                {selectedCountyFips ? ` (county ${selectedCountyFips})` : ""}
+              </h2>
+              <RankedList
+                dataset={dataset as unknown as EmpowerDataset}
+                severityByZip={severityByZip}
+                outageByZip={outageByZip}
+                countyFips={selectedCountyFips}
+                limit={100}
+              />
+            </section>
+          </div>
+        )}
+      </div>
     </main>
   );
 }

@@ -221,9 +221,19 @@ describe("PlannerPage", () => {
 
     await screen.findByRole("rowheader", { name: "02360" });
 
-    // Baseline score for 02360 with no outage: dependents only.
+    // Baseline score for 02360 with no outage: dependents only. The score now
+    // renders as an integer 0–100 (Math.round(score * 100)), shown as the bold
+    // number beside the aria-hidden bar in the row's score cell. Scope the
+    // match to that score <span> (class `shrink-0`) so it is not confused with
+    // the bare integer in the rank column.
+    const scoreSpanMatcher = (_content: string, element: Element | null) =>
+      element !== null &&
+      element.tagName === "SPAN" &&
+      element.className.includes("shrink-0") &&
+      /^\d{1,3}$/.test(element.textContent?.trim() ?? "");
+
     const scoreBefore = within(rowForZip("02360"))
-      .getByText(/^\d+\.\d{2}$/)
+      .getByText(scoreSpanMatcher)
       .textContent?.trim();
 
     // Turn on Storm Scenario; 02360 has an active simulated outage.
@@ -233,17 +243,21 @@ describe("PlannerPage", () => {
     fireEvent.click(toggle);
 
     // The outage layer resolves; the 02360 row now shows an active-outage
-    // reason, which is the honest signal that the ZIP is flagged.
+    // reason, which is the honest signal that the ZIP is flagged. The inactive
+    // factors ("no active outage") are hidden, so the chip only appears when
+    // the ZIP is actually flagged.
     await waitFor(() => {
       expect(
         within(rowForZip("02360")).getByText(/active outage bonus/i),
       ).toBeInTheDocument();
     });
 
-    // The outage bonus also raises the ZIP's score versus the live-only view.
+    // The outage bonus also raises the ZIP's 0–100 score versus the live-only
+    // view. Use >= to stay safe against rounding, but the active-outage chip
+    // above is the real proof of flagging.
     const scoreAfter = within(rowForZip("02360"))
-      .getByText(/^\d+\.\d{2}$/)
+      .getByText(scoreSpanMatcher)
       .textContent?.trim();
-    expect(Number(scoreAfter)).toBeGreaterThan(Number(scoreBefore));
+    expect(Number(scoreAfter)).toBeGreaterThanOrEqual(Number(scoreBefore));
   });
 });

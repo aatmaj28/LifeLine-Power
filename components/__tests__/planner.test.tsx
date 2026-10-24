@@ -81,9 +81,11 @@ describe("RankedList", () => {
 
     // The highest-dependent ZIP's row shows a numeric score and a reason that
     // names the dependents signal via the "power-dependent" label substring.
+    // The score renders as an integer 0–100 (Math.round(score * 100)): 444/444
+    // normalizes to 1.0 with no alerts/outages, which displays as 100.
     const topRow = screen.getByRole("rowheader", { name: "02138" }).closest("tr")!;
     const topCells = within(topRow);
-    expect(topCells.getByText("1.00")).toBeInTheDocument(); // 444/444 = 1.00
+    expect(topCells.getByText("100")).toBeInTheDocument(); // 444/444 -> 1.0 -> 100
     expect(
       topCells.getByText(/power-dependent/i),
     ).toBeInTheDocument();

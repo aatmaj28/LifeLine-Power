@@ -8,15 +8,16 @@
  * `copy.catalog` so the card is localized, and the two fixed safety lines are
  * rendered through {@link SafetyLines}.
  *
+ * The battery timeline is the one bold moment: a large horizontal battery bar
+ * running from "power goes out" to "battery runs out", always labeled
+ * "based on what you entered". Everything else stays quiet and simple.
+ *
  * Honesty and safety rules (non-negotiable):
  *   - The battery timeline is always labeled "based on what you entered"; the
- *     label is appended by `formatBatteryTimeline`.
+ *     label is appended by `formatBatteryTimeline` and shown under the bar.
  *   - Any masked emPOWER count is shown via `SmallCount.label` (e.g.
- *     "11 or fewer"), never a raw number. The resident card does not normally
- *     carry a count, but when one is passed it is rendered through its label.
- *   - No medical advice and no evacuation-timing content. The only guidance is
- *     the plain-language steps-before-storm, verified help numbers, and the two
- *     fixed safety lines.
+ *     "11 or fewer"), never a raw number.
+ *   - No medical advice and no evacuation-timing content.
  *   - Help numbers are limited to verified resources cited in
  *     `docs/data-notes.md`. We never claim a shelter has power, charging, or
  *     space; Mass 211 is linked for current shelter info.
@@ -90,6 +91,70 @@ const STEP_KEYS: readonly (keyof ResolvedCopy["catalog"])[] = [
   "steps.keepDevicesClose",
 ];
 
+/** Format an epoch-ms time as a short local clock time, e.g. "6 PM". */
+const CLOCK = new Intl.DateTimeFormat("en-US", {
+  hour: "numeric",
+  minute: "2-digit",
+});
+function clockTime(epochMs: number): string {
+  const parts = CLOCK.formatToParts(new Date(epochMs));
+  const hour = parts.find((p) => p.type === "hour")?.value ?? "";
+  const minute = parts.find((p) => p.type === "minute")?.value ?? "";
+  const period = parts.find((p) => p.type === "dayPeriod")?.value ?? "";
+  const clock = minute === "00" ? hour : `${hour}:${minute}`;
+  return period ? `${clock} ${period}` : clock;
+}
+
+/**
+ * The bold battery bar. A horizontal amber fill spanning the whole runtime,
+ * with a start cap ("power goes out") and an end cap ("battery runs out"), plus
+ * the plain-language sentence and the fixed "based on what you entered" label
+ * underneath. Purely presentational — it reads the already-computed timeline.
+ */
+function BatteryTimeline({
+  timeline,
+  sentence,
+}: {
+  timeline: Timeline;
+  sentence: string;
+}) {
+  const startLabel = clockTime(timeline.start);
+  const endLabel = clockTime(timeline.depletion);
+  const hours = Math.round(timeline.batteryHours);
+  const hoursLabel = hours === 1 ? "about 1 hour" : `about ${hours} hours`;
+
+  return (
+    <div className="flex flex-col gap-3">
+      {/* The battery: a rounded cell with a terminal nub, filled amber. */}
+      <div className="flex items-stretch" aria-hidden="true">
+        <div className="relative flex-1 overflow-hidden rounded-lg border-2 border-storm-navy bg-white">
+          <div className="h-14 w-full bg-power-amber" />
+          <span className="absolute inset-0 flex items-center justify-center text-lg font-bold text-power-ink">
+            {hoursLabel}
+          </span>
+        </div>
+        {/* Battery terminal nub. */}
+        <div className="my-3 w-2 self-center rounded-r bg-storm-navy" style={{ height: "1.75rem" }} />
+      </div>
+
+      {/* End-cap labels under the bar. */}
+      <div className="flex items-start justify-between gap-4 text-sm">
+        <span className="flex flex-col font-semibold text-storm-navy">
+          Power goes out
+          <span className="font-normal">about {startLabel}</span>
+        </span>
+        <span className="flex flex-col items-end text-right font-semibold text-storm-navy">
+          Battery runs out
+          <span className="font-normal">about {endLabel}</span>
+        </span>
+      </div>
+
+      {/* Plain-language sentence + fixed "based on what you entered" label. */}
+      <p className="text-base text-storm-navy">{sentence}</p>
+    </div>
+  );
+}
+
 /**
  * Renders the resident Outage Plan card.
  *
@@ -104,7 +169,7 @@ export function OutagePlanCard({
   className,
 }: OutagePlanCardProps) {
   const containerClasses = [
-    "flex flex-col gap-6 rounded-lg border border-gray-300 bg-white p-6 text-gray-900",
+    "flex flex-col gap-7 rounded-xl border border-slate-200 bg-white p-6 text-storm-navy shadow-sm sm:p-8",
     className,
   ]
     .filter(Boolean)
@@ -120,15 +185,32 @@ export function OutagePlanCard({
     <article className={containerClasses} aria-label={copy.catalog["page.title"]}>
       <h2 className="text-2xl font-bold">{copy.catalog["page.title"]}</h2>
 
+      {/* Your battery timeline — the one bold moment. */}
+      <section className="flex flex-col gap-3 rounded-lg bg-mist p-5">
+        <h3 className="text-lg font-bold">
+          {copy.catalog["card.batteryTimeline.heading"]}
+        </h3>
+        {timeline && timelineText ? (
+          <BatteryTimeline timeline={timeline} sentence={timelineText} />
+        ) : (
+          <p className="text-base">{copy.catalog["form.batteryHours.label"]}</p>
+        )}
+      </section>
+
       {/* Your devices */}
       <section className="flex flex-col gap-2">
-        <h3 className="text-lg font-semibold">
+        <h3 className="text-lg font-bold">
           {copy.catalog["card.devices.heading"]}
         </h3>
         {plan.deviceTypes.length > 0 ? (
-          <ul className="list-disc pl-6">
+          <ul className="flex flex-col gap-1">
             {plan.deviceTypes.map((device, index) => (
-              <li key={`${device}-${index}`}>{device}</li>
+              <li key={`${device}-${index}`} className="flex items-start gap-2">
+                <span aria-hidden="true" className="mt-1 text-power-amber">
+                  ◆
+                </span>
+                <span>{device}</span>
+              </li>
             ))}
           </ul>
         ) : (
@@ -136,36 +218,16 @@ export function OutagePlanCard({
         )}
       </section>
 
-      {/* Your battery timeline */}
-      <section className="flex flex-col gap-2">
-        <h3 className="text-lg font-semibold">
-          {copy.catalog["card.batteryTimeline.heading"]}
-        </h3>
-        <p>
-          <span className="font-medium">
-            {copy.catalog["form.batteryHours.label"]}:
-          </span>{" "}
-          {plan.batteryHours}
-        </p>
-        {timelineText ? (
-          <p>{timelineText}</p>
-        ) : (
-          <p className="text-gray-700">
-            {copy.catalog["form.batteryHours.label"]}
-          </p>
-        )}
-      </section>
-
       {/* Your contacts */}
       <section className="flex flex-col gap-2">
-        <h3 className="text-lg font-semibold">
+        <h3 className="text-lg font-bold">
           {copy.catalog["card.contacts.heading"]}
         </h3>
         {plan.contacts.length > 0 ? (
-          <ul className="list-none pl-0">
+          <ul className="flex flex-col gap-1">
             {plan.contacts.map((contact, index) => (
               <li key={`${contact.name}-${index}`}>
-                <span className="font-medium">{contact.name}</span>
+                <span className="font-semibold">{contact.name}</span>
                 {contact.phone ? <span> — {contact.phone}</span> : null}
               </li>
             ))}
@@ -177,10 +239,10 @@ export function OutagePlanCard({
 
       {/* Steps to take before the storm */}
       <section className="flex flex-col gap-2">
-        <h3 className="text-lg font-semibold">
+        <h3 className="text-lg font-bold">
           {copy.catalog["card.stepsBeforeStorm.heading"]}
         </h3>
-        <ol className="list-decimal pl-6">
+        <ol className="flex list-decimal flex-col gap-1 pl-6">
           {STEP_KEYS.map((key) => (
             <li key={key}>{copy.catalog[key]}</li>
           ))}
@@ -189,20 +251,20 @@ export function OutagePlanCard({
 
       {/* Official help numbers */}
       <section className="flex flex-col gap-2">
-        <h3 className="text-lg font-semibold">
+        <h3 className="text-lg font-bold">
           {copy.catalog["card.helpNumbers.heading"]}
         </h3>
-        <ul className="list-none pl-0">
+        <ul className="flex flex-col gap-2">
           {HELP_RESOURCES.map((resource) => (
             <li key={resource.labelKey} className="flex flex-col">
-              <span className="font-medium">
+              <span className="font-semibold">
                 {copy.catalog[resource.labelKey]}
               </span>
               <span>
                 {resource.href ? (
                   <a
                     href={resource.href}
-                    className="underline"
+                    className="text-storm-navy underline underline-offset-2"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -216,9 +278,9 @@ export function OutagePlanCard({
           ))}
         </ul>
         {smallCount ? (
-          <p className="text-sm text-gray-700">{smallCount.label}</p>
+          <p className="text-sm text-slate-700">{smallCount.label}</p>
         ) : null}
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-slate-600">
           Help resource details are verified and cited in docs/data-notes.md.
         </p>
       </section>

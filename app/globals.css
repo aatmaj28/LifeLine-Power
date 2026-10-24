@@ -2,29 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ---------------------------------------------------------------------------
+ * PowerPlan theme
+ * A single, calm, trustworthy light theme. The audience includes older and
+ * low-vision users, so we force one readable theme regardless of the OS
+ * color-scheme setting and keep contrast high.
+ * ------------------------------------------------------------------------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light; /* never follow the OS into dark mode */
+
+  /* Palette */
+  --storm-navy: #1b2a41; /* primary text, header */
+  --mist: #eef2f6; /* page background */
+  --surface: #ffffff; /* cards / surfaces */
+  --power-amber: #e8a317; /* single accent: battery + primary actions */
+  --power-amber-ink: #5a3d00; /* readable text on amber (>= 4.5:1) */
+  --alert-red: #b42318; /* severe alerts only */
+  --calm-green: #2f7d4f; /* safe states */
+
+  --background: var(--mist);
+  --foreground: var(--storm-navy);
+
+  /* Base body text size: 18px for readability. */
+  font-size: 18px;
 }
 
+/* Force the light theme even when the OS prefers dark. Previously the
+ * background flipped to near-black while text stayed dark, which was
+ * unreadable. We keep one light theme for everyone. */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    color-scheme: light;
+    --background: var(--mist);
+    --foreground: var(--storm-navy);
   }
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
+  font-family: var(--font-atkinson), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.6;
 }
 
 /* ---------------------------------------------------------------------------
  * Cross-cutting accessibility styles (WCAG 2.2 AA)
  * Requirements 10.3, 10.4, 10.6
- * These are app-wide safety nets. Components still set their own accessible
- * names, labels, and >= 44x44px tap targets; the rules below make sure that
- * even if a component forgets, focus stays visible and motion is honored.
+ * App-wide safety nets. Components still set their own accessible names,
+ * labels, and >= 44x44px tap targets; the rules below keep focus visible and
+ * motion honored even if a component forgets.
  * ------------------------------------------------------------------------- */
 
 /* Req 10.6 — Honor prefers-reduced-motion app-wide.
@@ -44,7 +71,7 @@ body {
  * control, even if a component removes its own outline. Never remove focus
  * outlines without an equal-or-better replacement. */
 :focus-visible {
-  outline: 2px solid #1d4ed8; /* blue-700, >= 3:1 against white and near-black */
+  outline: 3px solid var(--power-amber);
   outline-offset: 2px;
   border-radius: 2px;
 }
@@ -65,16 +92,16 @@ body {
   top: 0;
   z-index: 1000;
   padding: 0.75rem 1rem;
-  background: #ffffff;
-  color: #171717;
-  border: 2px solid #1d4ed8;
+  background: var(--surface);
+  color: var(--storm-navy);
+  border: 2px solid var(--storm-navy);
   border-radius: 0 0 0.375rem 0;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .skip-link:focus,
 .skip-link:focus-visible {
   left: 0;
-  outline: 2px solid #1d4ed8;
+  outline: 3px solid var(--power-amber);
   outline-offset: 2px;
 }
