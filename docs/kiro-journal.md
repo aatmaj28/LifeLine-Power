@@ -16,8 +16,8 @@ fixed along the way.
   independent files could be built in parallel, with checkpoints between groups
   to keep the suite green.
 
-CLI, Web, and Crew variants were not used for this build; the work stayed in the
-IDE spec workflow.
+The IDE spec workflow did the bulk of the build; a later terminal pass used the
+Kiro CLI (see "Kiro CLI" below).
 
 ## How the specs were structured, and how that compared to vibe coding
 
@@ -346,6 +346,19 @@ measure. We did **not** change scoring to make the claim pass. Instead:
 - A `vitest.d.ts` augments the `vitest` module's `Assertion` with the jest-dom
   and `vitest-axe` matchers, so `toBeInTheDocument` and `toHaveNoViolations`
   type-check.
+
+## Kiro CLI
+
+The Kiro CLI was used from the terminal to run the full test suite (`npm test`)
+and log the result here. All 45 test files and 176 tests passed in about 4
+seconds.
+
+How this differed from working in the IDE: the IDE drove the build through the
+spec workflow, with hooks firing on save and task-completion events and the
+agent stepping through tasks. The CLI run was a direct, on-demand check from the
+command line — no spec, no hooks, no task graph, just run the suite, read the
+output, and record it. It is the quick way to confirm the suite is green outside
+the spec loop.
 
 ## MCP usage log (spec 3: wow-features)
 
