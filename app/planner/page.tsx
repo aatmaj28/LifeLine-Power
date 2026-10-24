@@ -32,8 +32,22 @@ import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 
 import DataSourceBadge from "@/components/DataSourceBadge";
+import MapLegend, { DEFAULT_LAYERS, type MapLayers } from "@/components/MapLegend";
 import RankedList from "@/components/RankedList";
 import SimulatedBadge from "@/components/SimulatedBadge";
+import type { ZipScore } from "@/components/CountyChoropleth";
+import StormReplay from "@/components/StormReplay";
+import { buildRankedRows, displayScore } from "@/lib/app/planner/rank";
+import {
+  clampHour,
+  countyStatusForFrame,
+  outageFlagsForFrame,
+  parseReplayFile,
+} from "@/lib/app/replay/replay";
+// The simulated replay is a small static file, bundled at build time.
+import replayJson from "@/data/sim-storm-replay.json";
+
+const REPLAY = parseReplayFile(replayJson);
 // Import only pure engine code into this client bundle. The engine barrel
 // (`@/lib/risk-engine`) re-exports server-only filesystem loaders that use
 // `node:fs`, so a client component must not pull it in at runtime. The alert
@@ -159,6 +173,22 @@ export default function PlannerPage() {
   const [selectedCountyFips, setSelectedCountyFips] = useState<
     string | undefined
   >(undefined);
+  const [selectedZip, setSelectedZip] = useState<string | undefined>(undefined);
+  const [layers, setLayers] = useState<MapLayers>(DEFAULT_LAYERS);
+  // Storm Replay is off by default and never autoplays.
+  const [replayOn, setReplayOn] = useState(false);
+  const [replayHour, setReplayHour] = useState(0);
+
+  // Storm Scenario and Storm Replay are both simulated outage sources; only one
+  // runs at a time so the map never mixes two made-up storms.
+  const toggleScenario = (on: boolean) => {
+    setStormScenario(on);
+    if (on) setReplayOn(false);
+  };
+  const toggleReplay = (on: boolean) => {
+    setReplayOn(on);
+    if (on) setStormScenario(false);
+  };
 
   // Base layers: emPOWER + live alerts, fetched once on mount.
   useEffect(() => {
@@ -238,6 +268,63 @@ export default function PlannerPage() {
     );
   }, [stormScenario, dataset, outages]);
 
+  // The current simulated replay frame (when Storm Replay is on).
+  const replayFrame =
+    replayOn && REPLAY
+      ? REPLAY.frames[clampHour(replayHour, REPLAY.frames.length)]
+      : undefined;
+  const replayOutageByZip = useMemo(
+    () => (replayFrame && dataset ? outageFlagsForFrame(replayFrame, dataset.zip) : undefined),
+    [replayFrame, dataset],
+  );
+  const replayCountyStatus = useMemo(
+    () => (replayFrame ? countyStatusForFrame(replayFrame) : undefined),
+    [replayFrame],
+  );
+  const outagesSimulated = stormScenario || replayOn;
+
+  // Layer toggles control what feeds the map AND the ranking, so what you see
+  // is what is scored. Turning a layer off removes its signal from both.
+  const activeSeverityByZip = layers.alerts ? severityByZip : undefined;
+  const activeCountySeverity = layers.alerts ? countySeverity : undefined;
+  const activeOutageByZip = layers.outages
+    ? (replayOutageByZip ?? outageByZip)
+    : undefined;
+  const activeCountyOutage = layers.outages ? replayCountyStatus : undefined;
+
+  // One scoring pass shared by the map circles and popups (the ranked list runs
+  // the same helper), so both always show the same 0–100 score and reasons.
+  const scores = useMemo(() => {
+    if (!dataset) return undefined;
+    const map = new Map<string, ZipScore>();
+    for (const { result } of buildRankedRows(
+      dataset,
+      activeSeverityByZip,
+      activeOutageByZip,
+    )) {
+      map.set(result.zip, {
+        score100: displayScore(result.score),
+        reasons: result.reasons,
+      });
+    }
+    return map;
+  }, [dataset, activeSeverityByZip, activeOutageByZip]);
+
+  // Clicking a ZIP on the map filters the list to that ZIP's county (so its row
+  // is always present) and highlights the row.
+  const selectZipFromMap = (zip: string) => {
+    const record = dataset?.zip.find((r) => r.zip === zip);
+    if (record) setSelectedCountyFips(record.countyFips);
+    setSelectedZip(zip);
+  };
+
+  // Bring the highlighted row into view after a map click.
+  useEffect(() => {
+    if (!selectedZip || typeof document === "undefined") return;
+    const row = document.querySelector<HTMLElement>(`tr[data-zip="${selectedZip}"]`);
+    row?.scrollIntoView?.({ block: "nearest" });
+  }, [selectedZip, selectedCountyFips]);
+
   return (
     <main className="flex min-h-screen flex-col">
       {/* Navy page header, consistent with the landing page. */}
@@ -279,7 +366,7 @@ export default function PlannerPage() {
               <input
                 type="checkbox"
                 checked={stormScenario}
-                onChange={(e) => setStormScenario(e.target.checked)}
+                onChange={(e) => toggleScenario(e.target.checked)}
                 className="h-6 w-6 rounded border-slate-400 text-power-amber focus-visible:outline-none"
               />
               <span>
@@ -289,6 +376,24 @@ export default function PlannerPage() {
             </label>
             {stormScenario && <SimulatedBadge label="Simulated outages" />}
           </div>
+          {REPLAY ? (
+            <label className="inline-flex min-h-[44px] items-center gap-3 text-base text-storm-navy">
+              <input
+                type="checkbox"
+                checked={replayOn}
+                onChange={(e) => toggleReplay(e.target.checked)}
+                className="h-6 w-6 rounded border-slate-400 text-power-amber focus-visible:outline-none"
+              />
+              <span>
+                Show Storm Replay: a simulated 12 hour nor&rsquo;easter, hour by
+                hour (Simulated)
+              </span>
+            </label>
+          ) : (
+            <p className="text-base text-storm-navy">
+              The simulated Storm Replay could not load.
+            </p>
+          )}
           {stormScenario && outages.status === "ok" && outages.updatedAt && (
             <DataSourceBadge
               source="simulated"
@@ -353,9 +458,9 @@ export default function PlannerPage() {
         )}
 
         {empower.status === "ok" && dataset && (
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            {/* Map view (left on wide screens). The ranked list is the full
-                non-map alternative. */}
+          <div className="flex flex-col gap-8">
+            {/* The map is the hero: full width, at least 60vh tall. The ranked
+                list below is the full non-map path to the same data. */}
             <section
               aria-labelledby="map-heading"
               className="flex flex-col gap-3"
@@ -364,50 +469,81 @@ export default function PlannerPage() {
                 id="map-heading"
                 className="text-xl font-semibold text-storm-navy"
               >
-                County map
+                Massachusetts map
               </h2>
-              <div className="h-[32rem] w-full overflow-hidden rounded-lg border border-slate-300 lg:h-[40rem]">
+              {replayOn && REPLAY && (
+                <StormReplay
+                  file={REPLAY}
+                  zips={dataset.zip}
+                  hour={replayHour}
+                  onHourChange={setReplayHour}
+                />
+              )}
+              <MapLegend
+                layers={layers}
+                onChange={setLayers}
+                outagesSimulated={outagesSimulated}
+              />
+              <div className="h-[60vh] min-h-[28rem] w-full overflow-hidden rounded-lg border border-slate-300 bg-white">
                 <CountyChoropleth
                   dataset={dataset as unknown as EmpowerDataset}
-                  countySeverity={countySeverity}
+                  countySeverity={activeCountySeverity}
                   selectedCountyFips={selectedCountyFips}
                   onSelectCounty={(fips) =>
                     setSelectedCountyFips((current) =>
                       current === fips ? undefined : fips,
                     )
                   }
+                  scores={scores}
+                  outageByZip={activeOutageByZip}
+                  countyOutage={activeCountyOutage}
+                  outagesSimulated={outagesSimulated}
+                  selectedZip={selectedZip}
+                  onSelectZip={selectZipFromMap}
+                  layers={layers}
                 />
               </div>
-              {selectedCountyFips && (
-                <button
-                  type="button"
-                  onClick={() => setSelectedCountyFips(undefined)}
-                  className="inline-flex min-h-[44px] w-fit items-center rounded border border-slate-400 bg-white px-4 py-2 text-base text-storm-navy hover:bg-mist focus-visible:outline-none"
-                >
-                  Show all counties
-                </button>
-              )}
+              <p className="text-sm text-slate-600">
+                Click a county to filter the list, or a circle to see a ZIP. Two
+                small ZIPs (02350 and 02661) have no Census location and appear
+                only in the list.
+              </p>
             </section>
 
-            {/* Ranked list (right on wide screens): the non-map path to the
-                same outreach-priority data. */}
+            {/* Ranked list: the accessible non-map path to the same data. */}
             <section
               aria-labelledby="ranked-heading"
               className="flex flex-col gap-3"
             >
-              <h2
-                id="ranked-heading"
-                className="text-xl font-semibold text-storm-navy"
-              >
-                Outreach priority
-                {selectedCountyFips ? ` (county ${selectedCountyFips})` : ""}
-              </h2>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2
+                  id="ranked-heading"
+                  className="text-xl font-semibold text-storm-navy"
+                >
+                  Outreach priority
+                  {selectedCountyFips ? ` (county ${selectedCountyFips})` : ""}
+                </h2>
+                {selectedCountyFips && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCountyFips(undefined);
+                      setSelectedZip(undefined);
+                    }}
+                    className="inline-flex min-h-[44px] w-fit items-center rounded border border-slate-400 bg-white px-4 py-2 text-base text-storm-navy hover:bg-mist focus-visible:outline-none"
+                  >
+                    Show all counties
+                  </button>
+                )}
+              </div>
               <RankedList
                 dataset={dataset as unknown as EmpowerDataset}
-                severityByZip={severityByZip}
-                outageByZip={outageByZip}
+                severityByZip={activeSeverityByZip}
+                outageByZip={activeOutageByZip}
                 countyFips={selectedCountyFips}
                 limit={100}
+                selectedZip={selectedZip}
+                onSelectZip={setSelectedZip}
               />
             </section>
           </div>

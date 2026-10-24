@@ -1,0 +1,19 @@
+{
+  "name": "powerplan-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Small stdio MCP server exposing PowerPlan's HHS emPOWER CSVs as query tools.",
+  "type": "module",
+  "main": "server.mjs",
+  "bin": {
+    "powerplan-mcp": "server.mjs"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "smoke": "node smoke.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "zod": "4.6.7"
+  }
+}

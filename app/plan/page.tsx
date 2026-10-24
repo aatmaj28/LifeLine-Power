@@ -36,6 +36,9 @@ import {
 } from "@/lib/app/plan-storage";
 import { resolveCopy, type ResolvedCopy } from "@/lib/app/copy/resolve";
 import { buildShareText } from "@/lib/app/share";
+import { formatBatteryTimeline } from "@/lib/app/battery-format";
+import { decodePlanHash, planLink, PLAN_HASH_KEY } from "@/lib/app/plan-hash";
+import QRCode from "qrcode";
 // Import only pure engine code into this client bundle. The engine barrel
 // (`@/lib/risk-engine`) re-exports server-only filesystem loaders that use
 // `node:fs`, so a client component must not pull it in at runtime. The battery
@@ -47,6 +50,8 @@ import type { NwsAlert } from "@/lib/risk-engine/alert-loader";
 import LanguagePicker from "@/components/LanguagePicker";
 import OutagePlanCard from "@/components/OutagePlanCard";
 import DataSourceBadge from "@/components/DataSourceBadge";
+import ReadAloud from "@/components/ReadAloud";
+import FridgeCard, { QR_TRUST_NOTE } from "@/components/FridgeCard";
 
 /** The fixed list of device types a resident can depend on. */
 const DEVICE_TYPES: readonly string[] = [
@@ -208,6 +213,84 @@ export default function PlanPage() {
     return result.ok ? result.value : null;
   }, [plan.batteryHours, outageStart]);
 
+  // Battery sentence in the selected language and in English (read-aloud
+  // fallback), always labeled "based on what you entered".
+  const englishCopy = useMemo(() => resolveCopy("en"), []);
+  const timelineText = timeline
+    ? formatBatteryTimeline(timeline, { basedOnInputLabel: resolvedCopy.basedOnInputLabel })
+    : null;
+  const englishTimelineText = timeline
+    ? formatBatteryTimeline(timeline, { basedOnInputLabel: englishCopy.basedOnInputLabel })
+    : null;
+
+  // Keep the battery-hours text box in step when the stored plan changes from
+  // outside typing (restored from localStorage or from a fridge-card code).
+  // Typing an invalid value never changes the plan, so it is never overwritten.
+  useEffect(() => {
+    setBatteryHoursText((text) =>
+      Number(text.trim()) === plan.batteryHours && text.trim() !== ""
+        ? text
+        : String(plan.batteryHours),
+    );
+  }, [plan.batteryHours]);
+
+  // Restore a plan from a fridge-card QR link (/plan#plan=...). The fragment is
+  // never sent to a server. After restoring we remove it from the address bar
+  // so the plan is not left in browser history or bookmarks.
+  const [restoreNote, setRestoreNote] = useState("");
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash;
+    if (!hash.includes(`${PLAN_HASH_KEY}=`)) return;
+    const restored = decodePlanHash(hash);
+    if (restored) {
+      setPlan(restored);
+      setRestoreNote(
+        "Your plan was loaded from a fridge card code. It is now saved in this browser only.",
+      );
+    } else {
+      setRestoreNote("That plan code could not be read, so your saved plan is shown.");
+    }
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+  }, [setPlan]);
+
+  // QR code for the fridge card, made locally in the browser.
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let cancelled = false;
+    QRCode.toDataURL(planLink(window.location.origin, plan), {
+      errorCorrectionLevel: "M",
+      margin: 1,
+      width: 380,
+    })
+      .then((url) => {
+        if (!cancelled) setQrDataUrl(url);
+      })
+      .catch(() => {
+        if (!cancelled) setQrDataUrl(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [plan]);
+
+  // Which layout to print: the full plan card (default) or the fridge card.
+  const [printMode, setPrintMode] = useState<"default" | "fridge">("default");
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const reset = () => setPrintMode("default");
+    window.addEventListener("afterprint", reset);
+    return () => window.removeEventListener("afterprint", reset);
+  }, []);
+  const printFridgeCard = useCallback(() => {
+    setPrintMode("fridge");
+    // Let React render the fridge layout before opening the print dialog.
+    setTimeout(() => {
+      if (typeof window !== "undefined") window.print();
+    }, 50);
+  }, []);
+
   const atContactLimit = plan.contacts.length >= MAX_CONTACTS;
 
   // --- Controlled-field handlers --------------------------------------------
@@ -319,12 +402,17 @@ export default function PlanPage() {
   const zipValid = isValidZip(plan.zip);
 
   return (
-    <main className="flex min-h-screen flex-col">
-      {/* Print stylesheet: hide controls and show only the card when printing. */}
+    <main className="flex min-h-screen flex-col" data-print={printMode}>
+      {/* Print stylesheet: hide controls and show only the card when printing.
+          In fridge mode, print only the one-page fridge card. */}
       <style>{`
+        .fridge-print { display: none; }
         @media print {
           .print-hide { display: none !important; }
           .print-only-card { box-shadow: none !important; border: none !important; }
+          [data-print="fridge"] .print-default { display: none !important; }
+          [data-print="fridge"] .fridge-print { display: block !important; }
+          @page { margin: 0.4in; }
         }
       `}</style>
 
@@ -336,7 +424,7 @@ export default function PlanPage() {
       </header>
 
       <div className="mx-auto flex w-full max-w-[680px] flex-col gap-8 px-4 py-8">
-        <div className="flex flex-col gap-2">
+        <div className="print-default flex flex-col gap-2">
           <h1 className="text-3xl font-bold text-storm-navy">
             {resolvedCopy.catalog["page.title"]}
           </h1>
@@ -344,6 +432,15 @@ export default function PlanPage() {
             {resolvedCopy.catalog["page.intro"]}
           </p>
         </div>
+
+        {restoreNote ? (
+          <p
+            role="status"
+            className="print-hide rounded-md border border-storm-navy bg-white px-4 py-3 text-base text-storm-navy"
+          >
+            {restoreNote}
+          </p>
+        ) : null}
 
         {/* Language picker (does not print). */}
         <div className="print-hide">
@@ -630,10 +727,21 @@ export default function PlanPage() {
         </section>
 
         {/* The resident's Outage Plan card. */}
-        <section aria-labelledby="card-heading" className="flex flex-col gap-4">
+        <section
+          aria-labelledby="card-heading"
+          className="print-default flex flex-col gap-4"
+        >
           <h2 id="card-heading" className="sr-only">
             Your outage plan
           </h2>
+          <ReadAloud
+            className="print-hide"
+            plan={plan}
+            copy={resolvedCopy}
+            englishCopy={englishCopy}
+            timelineText={timelineText}
+            englishTimelineText={englishTimelineText}
+          />
           <OutagePlanCard
             plan={plan}
             copy={resolvedCopy}
@@ -666,6 +774,56 @@ export default function PlanPage() {
             ) : null}
           </div>
         </section>
+
+        {/* Fridge card: screen controls (do not print). */}
+        <section
+          aria-labelledby="fridge-heading"
+          className="print-hide flex flex-col gap-3 rounded-lg border border-slate-300 bg-white p-5"
+        >
+          <h2 id="fridge-heading" className="text-xl font-semibold text-storm-navy">
+            Fridge card
+          </h2>
+          <p className="text-base text-storm-navy">
+            Print a one-page card with large text to keep on your fridge. Scan the
+            code with a phone to open this plan.
+          </p>
+          <div className="flex flex-wrap items-center gap-4">
+            {qrDataUrl ? (
+              <img
+                src={qrDataUrl}
+                alt="QR code that opens this plan on a phone"
+                width={160}
+                height={160}
+                className="h-40 w-40 rounded border border-slate-300"
+              />
+            ) : null}
+            <p className="max-w-xs text-base font-semibold text-storm-navy">
+              {QR_TRUST_NOTE}
+            </p>
+          </div>
+          <p className="text-sm text-slate-600">
+            The plan is stored in the part of the link after &ldquo;#&rdquo;, which
+            is never sent to a server.
+          </p>
+          <button
+            type="button"
+            onClick={printFridgeCard}
+            className="min-h-[44px] self-start rounded-md border border-storm-navy bg-white px-5 py-2 text-base font-semibold text-storm-navy hover:bg-mist"
+          >
+            Print fridge card
+          </button>
+        </section>
+
+        {/* Fridge card: print-only layout. */}
+        <div className="fridge-print">
+          <FridgeCard
+            plan={plan}
+            copy={resolvedCopy}
+            timeline={timeline}
+            timelineText={timelineText}
+            qrDataUrl={qrDataUrl}
+          />
+        </div>
       </div>
     </main>
   );

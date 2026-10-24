@@ -35,23 +35,40 @@ up to three emergency contacts. PowerPlan shows:
 - The card is **printable**, **shareable** (native share sheet, with copy and
   print fallbacks), and available in **English, Spanish, Portuguese, Haitian
   Creole, Simplified Chinese, and Vietnamese**.
+- **Read my plan aloud** — the browser's own voices read the plan in the
+  selected language. If the device has no voice for that language, a plain note
+  says so and the English plan is read instead. No external speech service.
+- **Fridge card** — a one-page, large-text print layout with the battery bar,
+  devices, contacts, safety lines, help numbers, and a QR code. The QR is made
+  in the browser and opens `/plan` with the plan stored after the `#` in the
+  link, which browsers never send to a server. Scanning it restores the plan on
+  another phone. The card says: "This code contains your plan. Share it only
+  with people you trust."
 
 Your data stays in your browser (localStorage). No accounts. Only the ZIP code
-leaves the browser, for data lookups.
+leaves the browser, for data lookups. (The fridge-card QR is the one place the
+plan is put in a link, only when you choose to print it, and only in the part of
+the link that is never sent to a server.)
 
 ### Planner (`/planner`, desktop)
 
-- A choropleth of the **14 Massachusetts counties** colored by the number of
-  Medicare beneficiaries who rely on electricity-dependent equipment (HHS
-  emPOWER), overlaid with active NWS alerts. Click a county to drill into its
-  ZIPs.
+- **The map is the hero**: full width and at least 60% of the screen tall.
+  - The **14 Massachusetts counties** are shaded by the number of Medicare
+    beneficiaries who rely on electricity-dependent equipment (HHS emPOWER).
+  - **One circle per ZIP** (508 of 510 ZIPs), sized by that count and colored
+    by outreach priority. Masked ZIPs show "11 or fewer".
+  - Click a circle for a popup (ZIP, county, count, score 0 to 100, active
+    reasons); its row in the ranked list is highlighted. Click a ZIP in the list
+    and the map pans to it.
+  - A legend and three **layer toggles**: Power dependent residents, Weather
+    alerts, Outages. A toggle removes that signal from both the map and the
+    ranking, so what you see is what is scored.
 - A ranked **outreach-priority** list combining dependent population, alert
-  severity, and outage status. Each row shows the score **and the reasons**
-  behind it.
-- A clearly labeled **Storm Scenario** mode that layers a simulated nor'easter
-  over Eastern Massachusetts on top of the live data, so the demo always shows
-  outage-driven prioritization. The simulated layer is always badged
-  "Simulated".
+  severity, and outage status. Each row shows a 0 to 100 score **and the
+  reasons** behind it.
+- **Storm Scenario** (simulated outages over Eastern MA) and **Storm Replay**
+  (a simulated 12-hour nor'easter, hour by hour). Both are always labeled
+  "Simulated", and only one runs at a time.
 
 The ranked list is a full, non-map path to the same data, so the dashboard works
 without touching the map.
@@ -109,10 +126,16 @@ npm test
 - The app's pure helpers have their own property tests (envelope mapping, plan
   serialization round-trip, county aggregation, provider-chain resolution, and
   more).
-- **axe** accessibility checks run against the two main pages (`/plan` and
-  `/planner`).
+- The Storm Replay engine, plan-hash encoding, and spoken plan have property
+  tests too (counter equals the sum over affected ZIPs, never exceeds the
+  statewide total, is deterministic, counts only known ZIPs; the plan link
+  round-trips any plan, including accented and Chinese names; the spoken plan
+  always ends with both safety lines).
+- The MCP server has unit tests plus a real stdio round-trip test.
+- **axe** accessibility checks run against `/plan`, `/planner` (including Storm
+  Replay at its busiest hour), and the fridge card.
 
-Current status: 113 tests across 34 files pass; `typecheck` and `build` are
+Current status: 163 tests across 42 files pass; `typecheck` and `build` are
 clean.
 
 > Note: automated axe checks catch many issues but not all. Full WCAG 2.2 AA
@@ -128,6 +151,56 @@ see the ranking shift, and it keeps the demo reliable even when there is no
 active real storm. The simulated layer is always labeled "Simulated"; the live
 base layers are not.
 
+## Storm Replay (simulated)
+
+1. Open `/planner` and check **Show Storm Replay** under "Storm Scenario".
+2. Use **Play**, **Pause**, **Step back**, **Step forward**, or drag the
+   **Simulated hour** slider (0 to 12). It never plays on its own.
+3. Each hour, the counties and ZIP circles update, the ranked list reorders, and
+   a large counter shows "About N power dependent Medicare residents in
+   simulated outage areas".
+
+The storm moves from the Islands and Cape Cod through Southeastern MA into
+Greater Boston, then power is restored. It peaks at simulated hour 7 with about
+23,117 residents in simulated outage areas.
+
+- The scenario is in `data/sim-storm-replay.json`. It is **simulated**: not a
+  forecast and not a record of real outages. Every replay element says so.
+- Only counties marked "outage" are counted. "Restoring" counties are shown on
+  the map (green dashed border) but not counted.
+- Masked ZIPs ("11 or fewer") are counted as up to 11. A tooltip explains why
+  the counter says "about".
+- With reduced motion turned on in your system settings, Play moves one hour per
+  press and nothing animates.
+- The counter logic is a pure module (`lib/app/replay/replay.ts`) with property
+  tests, and `node tools/powerplan-mcp/verify-replay.mjs` cross-checks every
+  frame against the MCP server.
+
+## PowerPlan data MCP server
+
+`tools/powerplan-mcp` is a small stdio [MCP](https://modelcontextprotocol.io)
+server over the emPOWER CSVs in `data/`. Read-only, no network.
+
+| Tool | What it returns |
+|---|---|
+| `county_summary(county)` | One county's figures (name like `Plymouth` or FIPS like `25023`), including ZIP totals and masked-ZIP count |
+| `top_zips(county?, limit)` | ZIPs ranked by power-dependent count, optionally in one county (limit 1 to 100) |
+| `zip_detail(zip)` | One ZIP's figures |
+
+Counts of 11 are labeled "11 or fewer". Unknown counties or ZIPs return an
+error, never made-up numbers.
+
+```bash
+cd tools/powerplan-mcp && npm install && cd ../..
+node tools/powerplan-mcp/smoke.mjs                               # list tools + sample calls
+node tools/powerplan-mcp/smoke.mjs top_zips '{"county":"Barnstable","limit":5}'
+node tools/powerplan-mcp/verify-replay.mjs                       # check Storm Replay numbers
+```
+
+To use it from Kiro, copy `tools/powerplan-mcp/mcp.json.example` to
+`.kiro/settings/mcp.json` (or merge its `powerplan-data` entry into your
+existing file), then reconnect MCP servers in Kiro.
+
 ## Data sources and licenses
 
 - **HHS emPOWER** — Medicare beneficiary counts for electricity-dependent
@@ -142,9 +215,14 @@ base layers are not.
 - **County boundaries** — a simplified GeoJSON of the 14 MA counties
   (`public/ma-counties.geojson`), derived from US Census cartographic boundary
   files (public domain), keyed to county FIPS.
+- **ZIP locations** — `public/ma-zip-centroids.json`, internal points from the
+  US Census Bureau 2020 Gazetteer ZCTA file (public domain), filtered to our
+  ZIPs. Two PO-box ZIPs (02350, 02661) have no ZCTA and appear only in the list.
+  See `docs/data-notes.md`.
 - **Map tiles** — OpenStreetMap, © OpenStreetMap contributors (ODbL).
-- **Simulated outages** — `data/sim-outages.json`, authored for this project and
-  always labeled "Simulated".
+- **Simulated outages and Storm Replay** — `data/sim-outages.json` and
+  `data/sim-storm-replay.json`, authored for this project and always labeled
+  "Simulated".
 - **Help resources** — Mass 211, 911, and utility medical/life-support
   registration (Eversource, National Grid), verified against official pages and
   cited in `docs/data-notes.md`.
@@ -175,18 +253,25 @@ These are non-negotiable and built into the product:
 - Automated accessibility checks do not prove full WCAG conformance.
 - Outage data in the demo is simulated. PowerPlan does not integrate a live
   utility outage feed.
+- ZIP circles sit at Census ZCTA centroids, which approximate a ZIP's location.
+- Read-aloud voices depend on the device. Haitian Creole voices are rare, so
+  that language usually falls back to English (with a note).
+- The fridge-card QR contains the plan, including contact names and phone
+  numbers. Anyone who scans it can read them, which is why the card says to
+  share it only with people you trust.
 
 ## Project layout
 
 ```
-.kiro/            Steering, specs (risk-engine, app), and hooks
+.kiro/            Steering, specs (risk-engine, app, wow-features), and hooks
 app/              Next.js App Router pages and API routes
-components/       UI components (map, ranked list, plan card, badges, ...)
+components/       UI components (map, legend, replay, ranked list, plan card, fridge card, ...)
 lib/risk-engine/  Data + logic layer (loaders, scoring, battery timeline)
-lib/app/          UI-layer pure helpers (envelope, cache, copy, planner helpers)
-data/             emPOWER CSVs + simulated outages (+ data/README.md)
+lib/app/          UI-layer pure helpers (envelope, copy, planner ranking, replay, speech, plan hash)
+data/             emPOWER CSVs, simulated outages, simulated storm replay (+ data/README.md)
 docs/             decisions, data notes, and the Kiro journal
-public/           ma-counties.geojson
+public/           ma-counties.geojson, ma-zip-centroids.json
+tools/            powerplan-mcp (MCP server), build-zip-centroids.mjs
 ```
 
 ## How Kiro was used

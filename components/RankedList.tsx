@@ -1,29 +1,21 @@
-import type {
-  EmpowerDataset,
-  EmpowerZipRecord,
-  Reason,
-  ScoreResult,
-  ScoringInputs,
-  Severity,
-} from "@/lib/risk-engine";
-// Import the runtime scoring core from its pure module, NOT the barrel. The
-// barrel re-exports server-only filesystem loaders (`node:fs`), so pulling
-// runtime values through it would drag those into any client bundle that
-// consumes this component (e.g. the planner page). `scoring.ts` is pure.
-import { outreachPriority, rankByPriority } from "@/lib/risk-engine/scoring";
-import { buildScoringConfig } from "@/lib/app/planner/scoring-config";
+import type { EmpowerDataset, Reason, Severity } from "@/lib/risk-engine";
+import {
+  buildRankedRows,
+  displayScore,
+  reasonApplies,
+} from "@/lib/app/planner/rank";
 
 /**
  * Props for {@link RankedList}.
  *
  * This is the non-map path to the planner's outreach-priority data
- * (Requirements 7.4, 10.2): it reproduces the same ranking the County_Choropleth
- * visualizes, as an accessible table that needs no map interaction.
+ * (Requirements 7.4, 10.2): it reproduces the same ranking the map visualizes,
+ * as an accessible table that needs no map interaction.
  *
  * `severityByZip` and `outageByZip` are driven by the planner page (live NWS
- * alerts and, in Storm_Scenario_Mode, simulated outages). When a ZIP is absent
- * from either map, the component defaults to `"none"` severity and no active
- * outage — never fabricating a signal.
+ * alerts and, in simulated modes, simulated outages). When a ZIP is absent from
+ * either map, the component defaults to `"none"` severity and no active outage —
+ * never fabricating a signal.
  */
 export interface RankedListProps {
   /** Loaded emPOWER dataset (from `/api/empower`). */
@@ -36,81 +28,11 @@ export interface RankedListProps {
   countyFips?: string;
   /** Optional cap on the number of rows rendered (e.g. top 50). */
   limit?: number;
+  /** The ZIP currently selected on the map; its row is highlighted. */
+  selectedZip?: string;
+  /** When provided, each ZIP becomes a button that selects it (pans the map). */
+  onSelectZip?: (zip: string) => void;
   className?: string;
-}
-
-/**
- * Score every ZIP in the dataset (optionally filtered to one county) and rank
- * the results by outreach priority.
- *
- * Builds a {@link ScoringInputs} per ZIP from the dataset's dependent count, the
- * supplied severity/outage maps, then calls `outreachPriority` with the
- * dataset-wide {@link buildScoringConfig}. Unknown-ZIP rejections are skipped so
- * the list never invents a score it cannot back with data. The surviving
- * results are ranked with `rankByPriority` (score descending, ties by ZIP).
- */
-function buildRankedRows(
-  dataset: EmpowerDataset,
-  severityByZip: Map<string, Severity> | undefined,
-  outageByZip: Map<string, boolean> | undefined,
-  countyFips: string | undefined,
-): Array<{ record: EmpowerZipRecord; result: ScoreResult }> {
-  const config = buildScoringConfig(dataset);
-  const knownZips = new Set(dataset.zip.map((record) => record.zip));
-
-  const records = countyFips
-    ? dataset.zip.filter((record) => record.countyFips === countyFips)
-    : dataset.zip;
-
-  const resultByZip = new Map<string, ScoreResult>();
-  const recordByZip = new Map<string, EmpowerZipRecord>();
-
-  for (const record of records) {
-    const inputs: ScoringInputs = {
-      zip: record.zip,
-      powerDependentDme: record.powerDependentDme.value,
-      severity: severityByZip?.get(record.zip) ?? "none",
-      hasActiveOutage: outageByZip?.get(record.zip) ?? false,
-    };
-
-    const scored = outreachPriority(inputs, config, knownZips);
-    // Skip rejected ZIPs (e.g. UNKNOWN_ZIP): never fabricate a score.
-    if (!scored.ok) continue;
-
-    resultByZip.set(record.zip, scored.value);
-    recordByZip.set(record.zip, record);
-  }
-
-  return rankByPriority([...resultByZip.values()]).map((result) => ({
-    // recordByZip always has the ZIP here: it was populated alongside the result.
-    record: recordByZip.get(result.zip)!,
-    result,
-  }));
-}
-
-/**
- * Display-only score on a 0–100 scale. The underlying scoring is unchanged; we
- * multiply the normalized score (which is bounded in roughly [0, a few]) by 100
- * and round for a familiar, readable number. The bar width is scaled relative
- * to the highest score currently shown.
- */
-function displayScore(score: number): number {
-  return Math.round(score * 100);
-}
-
-/**
- * Decide whether a reason reflects a factor that actually applies, so we can
- * hide inactive factors ("severity none", "no active outage"). Dependents
- * always apply. This reads the existing reason labels only — no scoring change.
- */
-function reasonApplies(reason: Reason): boolean {
-  if (reason.signal === "severity") {
-    return !/severity\s+none/i.test(reason.label);
-  }
-  if (reason.signal === "outage") {
-    return !/no active outage/i.test(reason.label);
-  }
-  return true; // dependents
 }
 
 /** A small icon (text glyph) per reason signal; paired with text, never color alone. */
@@ -128,7 +50,7 @@ function reasonIcon(signal: Reason["signal"]): string {
 }
 
 /** Reason chips: icon + text, only for factors that apply. */
-function ReasonChips({ reasons }: { reasons: Reason[] }) {
+export function ReasonChips({ reasons }: { reasons: Reason[] }) {
   const active = reasons.filter(reasonApplies);
   if (active.length === 0) {
     return <span className="text-sm text-slate-600">—</span>;
@@ -149,18 +71,14 @@ function ReasonChips({ reasons }: { reasons: Reason[] }) {
 }
 
 /**
- * The outreach-priority ranked list: the non-map alternative to the
- * County_Choropleth (Requirements 7.4, 7.5, 7.6, 10.2).
+ * The outreach-priority ranked list: the non-map alternative to the map
+ * (Requirements 7.4, 7.5, 7.6, 10.2).
  *
  * Each row shows the ZIP, its county, the aggregated power-dependent-DME count
  * (rendered via `SmallCount.label`, so a masked 11 reads "11 or fewer"), the
  * outreach-priority score on a 0–100 scale with a small bar, and the reasons
- * that apply as labeled chips.
- *
- * Accessibility (WCAG 2.2 AA): a semantic `<table>` with a `<caption>`, scoped
- * `<th>` header cells, and a visible rank column. The score and reasons are
- * plain text, so the data is fully available to screen readers and keyboard
- * users without touching the map.
+ * that apply as labeled chips. The selected ZIP's row is highlighted and marked
+ * `aria-current`.
  */
 export function RankedList({
   dataset,
@@ -168,6 +86,8 @@ export function RankedList({
   outageByZip,
   countyFips,
   limit,
+  selectedZip,
+  onSelectZip,
   className,
 }: RankedListProps) {
   const allRows = buildRankedRows(
@@ -198,6 +118,7 @@ export function RankedList({
         <table className="w-full border-collapse text-left text-base text-storm-navy">
           <caption className="mb-2 text-left text-sm text-slate-600">
             {captionText}
+            {onSelectZip ? " Select a ZIP to show it on the map." : ""}
           </caption>
           <thead>
             <tr className="border-b-2 border-slate-300">
@@ -225,19 +146,35 @@ export function RankedList({
             {rows.map(({ record, result }, index) => {
               const score100 = displayScore(result.score);
               const barPct =
-                maxScore > 0
-                  ? Math.round((result.score / maxScore) * 100)
-                  : 0;
+                maxScore > 0 ? Math.round((result.score / maxScore) * 100) : 0;
+              const isSelected = selectedZip === result.zip;
               return (
                 <tr
                   key={result.zip}
-                  className="border-b border-slate-200 align-top"
+                  data-zip={result.zip}
+                  aria-current={isSelected ? "true" : undefined}
+                  className={[
+                    "border-b border-slate-200 align-top",
+                    isSelected
+                      ? "bg-power-amber/15 outline outline-2 -outline-offset-2 outline-storm-navy"
+                      : "",
+                  ].join(" ")}
                 >
                   <td className="px-3 py-3 tabular-nums text-slate-600">
                     {index + 1}
                   </td>
                   <th scope="row" className="px-3 py-3 font-bold">
-                    {result.zip}
+                    {onSelectZip ? (
+                      <button
+                        type="button"
+                        onClick={() => onSelectZip(result.zip)}
+                        className="min-h-[44px] min-w-[44px] rounded px-1 text-left font-bold text-storm-navy underline decoration-dotted underline-offset-4 hover:decoration-solid"
+                      >
+                        {result.zip}
+                      </button>
+                    ) : (
+                      result.zip
+                    )}
                   </th>
                   <td className="px-3 py-3">{record.county}</td>
                   <td className="px-3 py-3">{record.powerDependentDme.label}</td>

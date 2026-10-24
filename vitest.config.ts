@@ -22,6 +22,7 @@ export default defineConfig({
       "lib/**/*.{test,property}.ts",
       "{app,components}/**/*.{test,property}.{ts,tsx}",
       "lib/app/**/*.{test,property}.{ts,tsx}",
+      "tools/*/__tests__/**/*.test.ts",
     ],
     globals: true,
     // Default to the node environment so the existing risk-engine suite keeps

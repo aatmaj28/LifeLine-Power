@@ -21,7 +21,8 @@ IDE spec workflow.
 
 ## How the specs were structured, and how that compared to vibe coding
 
-We used exactly **two specs**, matching the plan:
+We started with **two specs**, matching the plan, and later added a third
+(`wow-features`, described in its own section below):
 
 1. **`risk-engine`** — the data + logic layer: loaders for emPOWER CSVs, NWS
    alerts, and simulated outages; an explainable `outreachPriority` scorer;
@@ -62,8 +63,10 @@ Three hooks live in `.kiro/hooks/`:
 2. **`journal-on-task-complete`** (on spec task completion) — appends a short
    note to this journal describing what finished and which Kiro feature helped.
 3. **`axe-accessibility`** (on save of `app/**/*.tsx` or `components/**/*.tsx`) —
-   runs the axe accessibility check on the two main pages. **This hook is
-   currently disabled** — see "Accessibility hook loop" below.
+   runs the axe accessibility tests. It was disabled after it looped (see
+   "Accessibility hook loop" below) and **re-enabled in spec 3** with a
+   report-only prompt that forbids editing files, so it can no longer
+   re-trigger itself.
 
 ## How steering changed responses
 
@@ -89,7 +92,14 @@ as fixed strings that are never sent to an AI provider.
 
 ## MCP servers used
 
-None. This build did not require any MCP servers.
+Specs 1 and 2 used none. Spec 3 built one: the **PowerPlan data MCP server**
+(`tools/powerplan-mcp`), a small stdio server over our own emPOWER CSVs with
+three read-only tools: `county_summary`, `top_zips`, and `zip_detail`. It was
+built first in spec 3 so it could be used while building the rest. Why: picking
+demo ZIPs and checking counter totals by grepping CSVs is slow and error prone;
+asking a typed tool "top 3 ZIPs in Barnstable" or "Plymouth's ZIP total" is fast
+and returns honest labels ("11 or fewer") every time. Every use is listed in the
+"MCP usage log" at the end of this journal.
 
 ## Kiro powers used
 
@@ -188,6 +198,80 @@ the axe tests that run as part of `npm test` and at the checkpoints. The lesson:
 a `PostFileSave`/`fileEdited` hook whose action can modify files matching its own
 pattern needs a guard or should be run on demand rather than on every save.
 
+## Spec 3: `wow-features`
+
+A third Quick Spec (`.kiro/specs/wow-features/`) added demo features in a fixed
+priority order, finishing each fully before starting the next:
+
+1. **PowerPlan data MCP server** — built first so it could be used for the rest
+   of the spec (see "MCP usage log").
+2. **Map as the hero of /planner** — ZIP circles from Census 2020 ZCTA centroids,
+   popups, map ↔ list selection, legend, and layer toggles.
+3. **Storm Replay** — a simulated 12-hour nor'easter with a pure, property-tested
+   counter.
+4. **Read aloud** — browser `speechSynthesis`, language-matched voice, plain
+   English fallback.
+5. **Fridge card** — one-page print layout with a locally generated QR code that
+   carries the plan in the URL fragment.
+
+Scoring in `lib/risk-engine` was not changed. The map and the list now share one
+helper (`lib/app/planner/rank.ts`) that calls the engine's existing
+`outreachPriority`/`rankByPriority`, so the popup and the list can never show
+different scores.
+
+How the spec was run: requirements (7 requirements, EARS style), design (with 7
+correctness properties), and tasks (8 groups with optional test sub-tasks, all
+of which were run). In this session the spec sub-agents and task-status tools
+used for specs 1 and 2 were not available, so the three documents were written
+directly in the same format and tasks were ticked off in `tasks.md` by hand.
+
+### What the new property tests caught
+
+- **Replay counter** (Properties 1–5): counter equals the sum over ZIPs in
+  outage counties; never exceeds the statewide total (40,572); deterministic and
+  independent of ZIP order; counts only ZIPs in the dataset, even when a frame
+  names a FIPS code with no ZIPs; reports masked ZIPs exactly. These passed on
+  the first run, so we ran a **mutation check** to make sure they have teeth: we
+  broke the engine on purpose twice and restored it. Counting "restoring"
+  counties as outages failed Property 1 (2 tests). Dropping the duplicate-ZIP
+  guard failed Property 2's duplicate-records case. Both are realistic bugs: the
+  first would overstate the counter after the storm passes, the second would
+  double count if a ZIP list were ever merged twice.
+- **Plan hash** (Property 6): round-trips any plan using full Unicode graphemes
+  (names like "Nguyễn Thị Lan" or Chinese characters). This is why the encoder
+  goes through `TextEncoder` bytes before base64: plain `btoa` on a JavaScript
+  string throws on any character above U+00FF. The same property checks that
+  junk input never throws and that the plan lands only in the fragment, never
+  the query string.
+- **Spoken plan** (Property 7): for every plan and language, the last two
+  utterances are the two fixed safety lines, verbatim, and no utterance is empty.
+
+### Real issues in spec 3
+
+- **Flaky map test (next/dynamic is async).** A planner test clicked the map
+  stub's button right after the ranked list rendered. It passed alone but failed
+  about one run in ten in the full suite, because `next/dynamic` loads the map
+  module asynchronously. Fix: wait for the map (`findByRole`) instead of
+  assuming it. Confirmed with 10 back-to-back runs, 0 failures.
+- **Battery hours box out of sync on restore.** Wiring the fridge-card restore
+  exposed an existing bug: when a plan was restored (from localStorage or a QR
+  link), the battery-hours text box stayed at "0" while the card showed the
+  stored hours. Fix: keep the text box in step with the stored value whenever
+  the plan changes from outside typing. Typing an invalid value never changes
+  the plan, so it is never overwritten mid-edit. Covered by the fridge-card
+  restore test.
+- **Workspace permission on `.kiro/settings/mcp.json`.** Writing the MCP
+  registration file was blocked by a workspace permission rule. The exact
+  config is in `tools/powerplan-mcp/mcp.json.example`; copy it to
+  `.kiro/settings/mcp.json` to register the server with Kiro. The server itself
+  was exercised over real MCP stdio throughout the spec.
+- **Accessibility hook back on, without the loop.** The hook was re-enabled with
+  a prompt that runs `pages.axe.test.tsx` once and reports, and explicitly
+  forbids editing files (the edit is what re-triggered it). The axe suite now
+  also covers Storm Replay at its busiest hour and the fridge card: no
+  violations. One manual WCAG 1.4.13 fix was made to the replay tooltip (it can
+  be dismissed with Escape and hovered).
+
 ## Other notable decisions (see `docs/decisions.md`)
 
 - `react-leaflet` v5 installs cleanly against React 19 (v4 does not), so no
@@ -197,3 +281,39 @@ pattern needs a guard or should be run on demand rather than on every save.
 - A `vitest.d.ts` augments the `vitest` module's `Assertion` with the jest-dom
   and `vitest-axe` matchers, so `toBeInTheDocument` and `toHaveNoViolations`
   type-check.
+
+## MCP usage log (spec 3: wow-features)
+
+Every query made to the PowerPlan data MCP server (`tools/powerplan-mcp`) while
+building spec 3. Calls go over real MCP stdio through `tools/powerplan-mcp/smoke.mjs`.
+
+1. **Smoke test** — `county_summary("Plymouth")`, `top_zips(limit 3)`,
+   `zip_detail("02360")`, `zip_detail("99999")`. Confirmed the three tools, the
+   "11 or fewer" label, and that an unknown ZIP returns an error with no numbers.
+   Plymouth's ZIP sum (3,662) matched the county CSV exactly.
+2. **Centroid gaps** — `zip_detail("02350")` and `zip_detail("02661")`. These are
+   the two emPOWER ZIPs with no 2020 Census ZCTA. Both are masked ("11 or
+   fewer", 35 and 93 Medicare beneficiaries), so leaving them off the map loses
+   no meaningful circle. Logged in `docs/data-notes.md`.
+3. **Choosing the Storm Replay path** — `county_summary` for Barnstable,
+   Dukes, Nantucket, Plymouth, Bristol, Norfolk, Suffolk, Middlesex, and Essex,
+   then `top_zips` (limit 3) for Barnstable, Plymouth, and Suffolk. This set the
+   storm's route (islands → Cape → Southeastern MA → Greater Boston, peaking
+   over Middlesex, the largest county at 6,985). Essex was left out to keep the
+   storm in the east and southeast. The path covers the largest ZIPs
+   (Plymouth's 02360 with 444, Suffolk's 02124 with 235).
+5. **Checking how the ranking moves** — a one-off script on the MCP data showed
+   that ZIPs in simulated outage jump to the top (hour 1: Dukes and Nantucket
+   ZIPs lead; hour 7: 02360 Plymouth leads at 106). It also exposed that the
+   dependents factor tops out at about 6 points, because the scoring config
+   normalizes ZIP counts by a max that includes county totals (6,985). So the
+   map legend buckets were changed to step at 100s, which is how scores
+   actually move. Scoring was not changed; this is flagged in `docs/decisions.md`.
+   It also showed that `zip_sum_power_dependent` equals the county CSV total for
+   every county, so county-level frames can be summed from ZIPs safely.
+4. **Verifying the replay counter** — `tools/powerplan-mcp/verify-replay.mjs`
+   calls `county_summary` for each county in outage in each of the 13 frames
+   and compares the MCP totals with the replay engine's counter. All 13 frames
+   match, including masked-ZIP counts (peak: about 23,117 residents and 33
+   masked ZIPs at simulated hour 7). Statewide ZIP total is 40,572, the ceiling
+   the property tests enforce.

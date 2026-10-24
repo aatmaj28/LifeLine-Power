@@ -66,7 +66,7 @@ interface HelpResource {
  * `docs/data-notes.md` support. We never assert a shelter has power, charging,
  * or space — Mass 211 is linked for current shelter info.
  */
-const HELP_RESOURCES: readonly HelpResource[] = [
+export const HELP_RESOURCES: readonly HelpResource[] = [
   {
     labelKey: "help.mass211.label",
     detail: "Dial 211 or visit mass211.org",
@@ -110,8 +110,9 @@ function clockTime(epochMs: number): string {
  * with a start cap ("power goes out") and an end cap ("battery runs out"), plus
  * the plain-language sentence and the fixed "based on what you entered" label
  * underneath. Purely presentational — it reads the already-computed timeline.
+ * Exported so the fridge card can reuse it.
  */
-function BatteryTimeline({
+export function BatteryTimeline({
   timeline,
   sentence,
 }: {

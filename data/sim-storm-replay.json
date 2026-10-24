@@ -1,0 +1,136 @@
+{
+  "simulated": true,
+  "label": "Simulated",
+  "name": "Simulated nor'easter replay",
+  "description": "SIMULATED data for demonstration only. A made-up 12-hour nor'easter shown as hourly frames. It is not a forecast and not a record of any real storm or real power outages.",
+  "source": "Authored for PowerPlan. Path chosen with the powerplan-data MCP server (county_summary, top_zips).",
+  "updatedAt": "2026-10-24T15:30:00.000Z",
+  "hours": 12,
+  "frames": [
+    {
+      "hour": 0,
+      "label": "Storm approaching from the south. No outages yet.",
+      "counties": []
+    },
+    {
+      "hour": 1,
+      "label": "Outages begin on Nantucket and Martha's Vineyard.",
+      "counties": [
+        { "fips": "25019", "status": "outage" },
+        { "fips": "25007", "status": "outage" }
+      ]
+    },
+    {
+      "hour": 2,
+      "label": "Outages spread across Cape Cod.",
+      "counties": [
+        { "fips": "25019", "status": "outage" },
+        { "fips": "25007", "status": "outage" },
+        { "fips": "25001", "status": "outage" }
+      ]
+    },
+    {
+      "hour": 3,
+      "label": "Storm moves into Plymouth County.",
+      "counties": [
+        { "fips": "25019", "status": "outage" },
+        { "fips": "25007", "status": "outage" },
+        { "fips": "25001", "status": "outage" },
+        { "fips": "25023", "status": "outage" }
+      ]
+    },
+    {
+      "hour": 4,
+      "label": "Southeastern Massachusetts loses power.",
+      "counties": [
+        { "fips": "25019", "status": "outage" },
+        { "fips": "25007", "status": "outage" },
+        { "fips": "25001", "status": "outage" },
+        { "fips": "25023", "status": "outage" },
+        { "fips": "25005", "status": "outage" }
+      ]
+    },
+    {
+      "hour": 5,
+      "label": "Outages reach Norfolk County.",
+      "counties": [
+        { "fips": "25019", "status": "outage" },
+        { "fips": "25007", "status": "outage" },
+        { "fips": "25001", "status": "outage" },
+        { "fips": "25023", "status": "outage" },
+        { "fips": "25005", "status": "outage" },
+        { "fips": "25021", "status": "outage" }
+      ]
+    },
+    {
+      "hour": 6,
+      "label": "Storm reaches Greater Boston. The islands begin restoring.",
+      "counties": [
+        { "fips": "25019", "status": "restoring" },
+        { "fips": "25007", "status": "restoring" },
+        { "fips": "25001", "status": "outage" },
+        { "fips": "25023", "status": "outage" },
+        { "fips": "25005", "status": "outage" },
+        { "fips": "25021", "status": "outage" },
+        { "fips": "25025", "status": "outage" }
+      ]
+    },
+    {
+      "hour": 7,
+      "label": "Peak of the storm. Greater Boston and Middlesex County affected.",
+      "counties": [
+        { "fips": "25001", "status": "outage" },
+        { "fips": "25023", "status": "outage" },
+        { "fips": "25005", "status": "outage" },
+        { "fips": "25021", "status": "outage" },
+        { "fips": "25025", "status": "outage" },
+        { "fips": "25017", "status": "outage" }
+      ]
+    },
+    {
+      "hour": 8,
+      "label": "Cape Cod begins restoring. Storm moving north.",
+      "counties": [
+        { "fips": "25001", "status": "restoring" },
+        { "fips": "25023", "status": "outage" },
+        { "fips": "25005", "status": "outage" },
+        { "fips": "25021", "status": "outage" },
+        { "fips": "25025", "status": "outage" },
+        { "fips": "25017", "status": "outage" }
+      ]
+    },
+    {
+      "hour": 9,
+      "label": "Southeastern Massachusetts begins restoring.",
+      "counties": [
+        { "fips": "25023", "status": "restoring" },
+        { "fips": "25005", "status": "restoring" },
+        { "fips": "25021", "status": "outage" },
+        { "fips": "25025", "status": "outage" },
+        { "fips": "25017", "status": "outage" }
+      ]
+    },
+    {
+      "hour": 10,
+      "label": "Norfolk County begins restoring.",
+      "counties": [
+        { "fips": "25021", "status": "restoring" },
+        { "fips": "25025", "status": "outage" },
+        { "fips": "25017", "status": "outage" }
+      ]
+    },
+    {
+      "hour": 11,
+      "label": "Greater Boston begins restoring.",
+      "counties": [
+        { "fips": "25025", "status": "restoring" },
+        { "fips": "25017", "status": "restoring" }
+      ]
+    },
+    {
+      "hour": 12,
+      "label": "Storm has passed. Simulated power is restored.",
+      "counties": []
+    }
+  ]
+}

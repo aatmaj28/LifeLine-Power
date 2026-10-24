@@ -2,8 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, waitFor } from "@testing-library/react";
 import { axe } from "vitest-axe";
 
+import { fireEvent } from "@testing-library/react";
+
 import PlanPage from "@/app/plan/page";
 import PlannerPage from "@/app/planner/page";
+import FridgeCard from "@/components/FridgeCard";
+import { resolveCopy } from "@/lib/app/copy/resolve";
 
 // Stub the Leaflet choropleth so it never executes under jsdom. The planner
 // loads it via `dynamic(() => import("@/components/CountyChoropleth"), { ssr:
@@ -122,6 +126,39 @@ describe("Accessibility (axe) — main pages", () => {
     await waitFor(() => {
       expect(container.querySelector("table")).not.toBeNull();
     });
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+
+  it("/planner with Storm Replay on has no axe violations", async () => {
+    const { container, findByRole, getByRole } = render(<PlannerPage />);
+    await findByRole("heading", { name: /outreach priority/i });
+    fireEvent.click(getByRole("checkbox", { name: /show storm replay/i }));
+    await findByRole("heading", { name: /storm replay \(simulated\)/i });
+    // Step to a busy simulated hour so the counter, tooltip, and chips render.
+    fireEvent.change(getByRole("slider", { name: /simulated hour/i }), {
+      target: { value: "7" },
+    });
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+
+  it("the fridge card has no axe violations", async () => {
+    const { container } = render(
+      <FridgeCard
+        plan={{
+          zip: "02360",
+          deviceTypes: ["Oxygen concentrator"],
+          batteryHours: 4,
+          contacts: [{ name: "Jordan Rivera", phone: "555-0100" }],
+          language: "en",
+        }}
+        copy={resolveCopy("en")}
+        timeline={{ start: 0, batteryHours: 4, depletion: 4 * 3_600_000 }}
+        timelineText="Your battery covers about 4 hours. based on what you entered"
+        qrDataUrl="data:image/png;base64,iVBORw0KGgo="
+      />,
+    );
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
