@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+}
+
+/* ---------------------------------------------------------------------------
+ * Cross-cutting accessibility styles (WCAG 2.2 AA)
+ * Requirements 10.3, 10.4, 10.6
+ * These are app-wide safety nets. Components still set their own accessible
+ * names, labels, and >= 44x44px tap targets; the rules below make sure that
+ * even if a component forgets, focus stays visible and motion is honored.
+ * ------------------------------------------------------------------------- */
+
+/* Req 10.6 — Honor prefers-reduced-motion app-wide.
+ * Near-instant (not fully 0) so transition/animation end events still fire. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Req 10.4 — Visible, high-contrast focus indicator on every interactive
+ * control, even if a component removes its own outline. Never remove focus
+ * outlines without an equal-or-better replacement. */
+:focus-visible {
+  outline: 2px solid #1d4ed8; /* blue-700, >= 3:1 against white and near-black */
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Minimum tap-target helper (>= 44x44px). Tap targets are mostly handled in
+ * components via padding/sizing; apply this class to any control that would
+ * otherwise be smaller than 44px. */
+.tap-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Skip-to-content link: visually hidden until focused, then revealed at the
+ * top-left so keyboard users can jump straight to the main content. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 1000;
+  padding: 0.75rem 1rem;
+  background: #ffffff;
+  color: #171717;
+  border: 2px solid #1d4ed8;
+  border-radius: 0 0 0.375rem 0;
+  font-weight: 600;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  left: 0;
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}

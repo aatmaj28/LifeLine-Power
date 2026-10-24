@@ -1,0 +1,17 @@
+{
+  "enabled": false,
+  "name": "Accessibility check on page or component save",
+  "description": "When a page or component is saved, run the axe accessibility check so violations are caught early.",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "app/**/*.tsx",
+      "components/**/*.tsx"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A page or component under app/ or components/ was just saved. Run the axe accessibility check for the two main pages (/plan and /planner) using the project's axe test setup (Vitest + axe). Report any serious or critical violations with the rule id and the element, then stop. Remember: automated checks do not prove full WCAG conformance."
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Journal entry on spec task completion",
+  "description": "When a spec task is completed, append a short entry to the Kiro journal describing what was done and which Kiro feature helped.",
+  "version": "1",
+  "when": {
+    "type": "postTaskExecution"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A spec task was just marked complete. Append a short entry (2-3 sentences) to docs/kiro-journal.md: the spec and task that finished, what was built, and which Kiro feature helped (spec workflow, steering, a hook, property-based tests, etc.). Keep it concise and factual. Create docs/kiro-journal.md if it does not exist. Do not duplicate an entry that is already there."
+  }
+}

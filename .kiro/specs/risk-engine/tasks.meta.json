@@ -1,0 +1,549 @@
+{
+  "pbtResults": {
+    "9.2 Write property test: depletion never before start and monotonic in hours": {
+      "status": "passed",
+      "lastRunTimestamp": 1792862610635
+    },
+    "9.3 Write property test: invalid inputs rejected, never silently scored": {
+      "status": "passed",
+      "lastRunTimestamp": 1792862611698
+    },
+    "7.2 Write property test: dependent count is non-decreasing in score": {
+      "status": "passed",
+      "lastRunTimestamp": 1792862605049
+    },
+    "7.4 Write property test: zero dependents never outscores greater dependents": {
+      "status": "passed",
+      "lastRunTimestamp": 1792862607507
+    },
+    "7.3 Write property test: severity is non-decreasing in score": {
+      "status": "passed",
+      "lastRunTimestamp": 1792862605887
+    },
+    "7.5 Write property test: adding an active outage never lowers the score": {
+      "status": "passed",
+      "lastRunTimestamp": 1792862608234
+    },
+    "7.7 Write property test: ranking is stable under input reordering": {
+      "status": "passed",
+      "lastRunTimestamp": 1792862609758
+    }
+  },
+  "executionHistory": {
+    "1.1 Initialize the Next.js App Router + TypeScript + Tailwind project": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859885851
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859892244
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792860843363
+      }
+    ],
+    "1.2 Configure Vitest + fast-check": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859885938
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792860846191
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792860898481
+      }
+    ],
+    "2.1 Create `lib/risk-engine/types.ts`": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859885964
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792860901098
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792860942405
+      }
+    ],
+    "2.2 Write unit tests for `makeSmallCount`": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859885985
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792860945906
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792861636101
+      }
+    ],
+    "3.1 Implement pure CSV parsers in `lib/risk-engine/empower-loader.ts`": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886016
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792860946855
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792861638155
+      }
+    ],
+    "3.2 Implement `loadEmpowerDataset` I/O wrapper and indices": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886037
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792861645050
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792861952737
+      }
+    ],
+    "3.3 Write unit tests for the CSV parsers": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886060
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862316585
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862408906
+      }
+    ],
+    "4. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886081
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792861972027
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862197258
+      }
+    ],
+    "5.1 Implement alert types, severity ordering, and pure mapping in `lib/risk-engine/alert-loader.ts`": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886100
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792861646017
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792861954118
+      }
+    ],
+    "5.2 Implement `fetchActiveAlerts` with User-Agent and 5-minute cache": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886120
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862315173
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862407550
+      }
+    ],
+    "5.3 Write unit tests for alert mapping and cache": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886136
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862413754
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862500558
+      }
+    ],
+    "6.1 Create `data/sim-outages.json`": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886201
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792860948258
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792861634720
+      }
+    ],
+    "6.2 Implement `validateOutages` and `loadSimulatedOutages` in `lib/risk-engine/outage-loader.ts`": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886223
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792861647423
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792861955551
+      }
+    ],
+    "6.3 Write unit tests for outage validation": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886243
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862317523
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862409824
+      }
+    ],
+    "7.1 Implement `outreachPriority` in `lib/risk-engine/scoring.ts`": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886272
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792860949223
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792861633765
+      }
+    ],
+    "7.2 Write property test: dependent count is non-decreasing in score": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886292
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862236416
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862308345
+      }
+    ],
+    "7.3 Write property test: severity is non-decreasing in score": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886312
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862237423
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862309763
+      }
+    ],
+    "7.4 Write property test: zero dependents never outscores greater dependents": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886333
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862238768
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862310689
+      }
+    ],
+    "7.5 Write property test: adding an active outage never lowers the score": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886355
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862239517
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862311598
+      }
+    ],
+    "7.6 Implement `rankByPriority` in `lib/risk-engine/scoring.ts`": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886374
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862200762
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862233794
+      }
+    ],
+    "7.7 Write property test: ranking is stable under input reordering": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886397
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862318463
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862410737
+      }
+    ],
+    "8. Checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886416
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862574218
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862620990
+      }
+    ],
+    "9.1 Implement `batteryTimeline` in `lib/risk-engine/battery.ts`": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886433
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792860950317
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792861637101
+      }
+    ],
+    "9.2 Write property test: depletion never before start and monotonic in hours": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886451
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792861648807
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792861956471
+      }
+    ],
+    "9.3 Write property test: invalid inputs rejected, never silently scored": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886469
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792861649569
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792861957451
+      }
+    ],
+    "10.1 Create `lib/risk-engine/index.ts`": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886492
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862509515
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862569953
+      }
+    ],
+    "11. Final checkpoint - Ensure all tests pass": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792859886512
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862623199
+      },
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862627206
+      }
+    ],
+    "1. Scaffold Next.js + TypeScript + Tailwind project and test tooling": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792860898510
+      }
+    ],
+    "2. Define shared types and labels": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792861636137
+      }
+    ],
+    "9. Implement battery-timeline core": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792861957488
+      }
+    ],
+    "3. Implement emPOWER CSV loader": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862408953
+      }
+    ],
+    "6. Implement simulated-outage loader and data file": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862409864
+      }
+    ],
+    "7. Implement scoring core": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862410778
+      }
+    ],
+    "5. Implement NWS alert loader": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862500602
+      }
+    ],
+    "10. Wire the public surface": [
+      {
+        "executionId": "6d8eb3e2-fec1-4567-b791-9ab9a39edaea",
+        "chatSessionId": "sess_a65d75ef-f9e2-4ac2-9efa-621d9b66eef3",
+        "timestamp": 1792862570002
+      }
+    ]
+  }
+}
